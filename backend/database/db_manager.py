@@ -99,3 +99,4 @@ def get_ingestion_logs() -> List[Dict[str, Any]]:
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
+

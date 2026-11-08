@@ -40,8 +40,14 @@ function DrawControl({ onBboxChange }) {
     const drawControl = new L.Control.Draw({
       edit:  { featureGroup: drawnItems },
       draw:  {
-        rectangle: { shapeOptions: { color: '#FF4500', weight: 2 } },
-        polygon:   false,
+        polygon: {
+          allowIntersection: false,
+          showArea: true,
+          shapeOptions: { color: '#FF4500', weight: 2, fillOpacity: 0.25 },
+        },
+        rectangle: {
+          shapeOptions: { color: '#FF4500', weight: 2, fillOpacity: 0.2 },
+        },
         circle:    false,
         marker:    false,
         polyline:  false,
@@ -55,13 +61,19 @@ function DrawControl({ onBboxChange }) {
       drawnItems.clearLayers()
       drawnItems.addLayer(e.layer)
       const bounds = e.layer.getBounds()
-      const bbox = [
-        parseFloat(bounds.getWest().toFixed(4)),
-        parseFloat(bounds.getSouth().toFixed(4)),
-        parseFloat(bounds.getEast().toFixed(4)),
-        parseFloat(bounds.getNorth().toFixed(4)),
-      ]
-      onBboxChange(bbox)
+      const west = parseFloat(bounds.getWest().toFixed(4))
+      const south = parseFloat(bounds.getSouth().toFixed(4))
+      const east = parseFloat(bounds.getEast().toFixed(4))
+      const north = parseFloat(bounds.getNorth().toFixed(4))
+      const bbox = [west, south, east, north]
+
+      // Approximate geodesic area in km2
+      const avgLatRad = ((north + south) / 2) * (Math.PI / 180)
+      const heightKm = Math.abs(north - south) * 111.13
+      const widthKm = Math.abs(east - west) * 111.13 * Math.cos(avgLatRad)
+      const approxAreaKm2 = Math.round(heightKm * widthKm)
+
+      onBboxChange(bbox, approxAreaKm2)
     })
 
     return () => {
@@ -122,21 +134,23 @@ function FRPLegend() {
 
 // ─── Main FireMap ─────────────────────────────────────────────────────────────
 export default function FireMap({ customHotspots }) {
-  const bbox       = useAppStore(s => s.bbox)
-  const setBbox    = useAppStore(s => s.setBbox)
-  const storeHotspots = useAppStore(s => s.hotspots)
-  const hotspots   = customHotspots || storeHotspots
+  const bbox              = useAppStore(s => s.bbox)
+  const aoiAreaKm2        = useAppStore(s => s.aoiAreaKm2)
+  const aoiName           = useAppStore(s => s.aoiName)
+  const setBboxAndRefetch = useAppStore(s => s.setBboxAndRefetch)
+  const storeHotspots     = useAppStore(s => s.hotspots)
+  const hotspots          = customHotspots || storeHotspots
   const [flyTarget, setFlyTarget] = useState(null)
   const [showOutline, setShowOutline] = useState(true)
 
-  const handleBboxChange = useCallback((newBbox) => {
-    setBbox(newBbox)
-  }, [setBbox])
+  const handleBboxChange = useCallback((newBbox, areaKm2) => {
+    setBboxAndRefetch(newBbox, areaKm2, 'Custom Drawn AOI')
+  }, [setBboxAndRefetch])
 
   const snapToRegion = (key) => {
     const preset = REGION_PRESETS[key]
     if (!preset) return
-    setBbox(preset.bbox)
+    setBboxAndRefetch(preset.bbox, null, preset.label)
     setFlyTarget({ center: preset.center, zoom: preset.zoom })
   }
 
@@ -166,6 +180,23 @@ export default function FireMap({ customHotspots }) {
           <Layers size={11} />
           Gujarat
         </button>
+      </div>
+
+      {/* Smart AOI Intelligence Badge */}
+      <div className="absolute top-2 right-2 z-[1000] bg-bg-card/95 backdrop-blur border border-border-muted rounded-lg px-2.5 py-1.5 text-xs font-mono space-y-0.5 shadow-lg max-w-[210px] hidden sm:block">
+        <div className="flex items-center gap-1 text-ember font-bold text-[11px]">
+          <Crosshair size={11} className="text-ember" />
+          <span>SMART AOI INTEL</span>
+        </div>
+        <div className="text-text-primary text-[11px] truncate font-semibold">{aoiName || 'Active Region'}</div>
+        <div className="text-[10px] text-text-muted flex justify-between">
+          <span>Area:</span>
+          <span className="text-text-primary">{aoiAreaKm2 ? `${aoiAreaKm2.toLocaleString()} km²` : 'Standard Bbox'}</span>
+        </div>
+        <div className="text-[10px] text-text-muted flex justify-between">
+          <span>Baseline:</span>
+          <span className="text-emerald-400 font-bold">25-Yr Harmonized</span>
+        </div>
       </div>
 
       {/* Leaflet Map */}

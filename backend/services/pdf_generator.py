@@ -200,3 +200,4 @@ def generate_executive_pdf_report(
     doc.build(story)
     buffer.seek(0)
     return buffer.getvalue()
+

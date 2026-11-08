@@ -1,19 +1,41 @@
-import { useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import useAppStore from '../store/useAppStore.js'
-import { AlertTriangle, Zap, Activity, ShieldCheck, Flame, Info } from 'lucide-react'
+import { AlertTriangle, Zap, Activity, ShieldCheck, Flame, Info, RefreshCw } from 'lucide-react'
+import axios from 'axios'
 import AnomalyChart from '../components/Charts/AnomalyChart.jsx'
 
 export default function AnomalyIntelligence() {
-  const { calendarData } = useAppStore()
+  const { calendarData, bbox } = useAppStore()
+  const [serverAnomalies, setServerAnomalies] = useState(null)
+  const [loadingServer, setLoadingServer] = useState(false)
 
-  // Find top 10 historical anomalies ranked by Z-Score
-  const rankedAnomalies = useMemo(() => {
+  useEffect(() => {
+    setLoadingServer(true)
+    axios
+      .get('/api/anomalies/ranking', {
+        params: { bbox: bbox ? bbox.join(',') : '72.0,20.0,74.5,22.0' }
+      })
+      .then((res) => {
+        if (res.data?.top_ranked_anomalies?.length) {
+          setServerAnomalies(res.data.top_ranked_anomalies)
+        }
+      })
+      .catch((err) => {
+        console.debug('Using client calendar fallback for anomalies:', err.message)
+      })
+      .finally(() => setLoadingServer(false))
+  }, [bbox])
+
+  // Fallback if server call fails or is loading
+  const clientRankedAnomalies = useMemo(() => {
     if (!calendarData || calendarData.length === 0) return []
     return [...calendarData]
       .filter((d) => d.is_anomaly || Math.abs(d.z_score || 0) >= 1.5)
       .sort((a, b) => Math.abs(b.z_score || 0) - Math.abs(a.z_score || 0))
-      .slice(0, 8)
+      .slice(0, 10)
   }, [calendarData])
+
+  const anomaliesToDisplay = serverAnomalies || clientRankedAnomalies
 
   return (
     <div className="p-4 space-y-4 max-w-7xl mx-auto">
@@ -60,16 +82,17 @@ export default function AnomalyIntelligence() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-muted/50 font-mono">
-              {rankedAnomalies.map((item, idx) => {
+              {anomaliesToDisplay.map((item, idx) => {
                 const z = item.z_score || 0
                 const isPositive = z > 0
+                const periodLabel = item.date || `${item.year}-${String(item.month).padStart(2, '0')}`
                 return (
                   <tr key={idx} className="hover:bg-bg-hover">
                     <td className="py-2 font-sans font-medium text-text-primary">
-                      {item.year}-{String(item.month).padStart(2, '0')}
+                      {periodLabel}
                     </td>
-                    <td className="py-2">{item.hdi}</td>
-                    <td className="py-2">{item.historical_median || '—'}</td>
+                    <td className="py-2">{typeof item.hdi === 'number' ? item.hdi.toFixed(2) : item.hdi}</td>
+                    <td className="py-2">{item.historical_median != null ? (typeof item.historical_median === 'number' ? item.historical_median.toFixed(2) : item.historical_median) : '—'}</td>
                     <td className="py-2 font-bold" style={{ color: isPositive ? '#FF4500' : '#38BDF8' }}>
                       {isPositive ? `+${z.toFixed(2)}σ` : `${z.toFixed(2)}σ`}
                     </td>
@@ -79,13 +102,13 @@ export default function AnomalyIntelligence() {
                         Math.abs(z) >= 2 ? 'bg-amber-500/20 text-amber-400' :
                         'bg-blue-500/20 text-blue-400'
                       }`}>
-                        {Math.abs(z) >= 3 ? 'Extreme Anomaly' : Math.abs(z) >= 2 ? 'High Anomaly' : 'Moderate'}
+                        {item.severity || (Math.abs(z) >= 3 ? 'Extreme Anomaly' : Math.abs(z) >= 2 ? 'High Anomaly' : 'Moderate')}
                       </span>
                     </td>
                     <td className="py-2 font-sans text-text-muted text-[11px]">
-                      {isPositive
+                      {item.explanation || (isPositive
                         ? `Burning activity was ${(Math.abs(z) * 1.5).toFixed(1)}x greater than climatological expectation.`
-                        : `Significantly suppressed burning activity due to wet or cloudy conditions.`}
+                        : `Significantly suppressed burning activity due to wet or cloudy conditions.`)}
                     </td>
                   </tr>
                 )

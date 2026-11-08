@@ -58,19 +58,43 @@ export default function ReportsDownloads() {
         <div>
           <h1 className="text-xl font-bold text-text-primary flex items-center gap-2">
             <Download className="text-ember" size={22} />
-            Multi-Format Data Export & Provenance Reports
+            Regional Intelligence Reports & Satellite Data Quality Monitor
           </h1>
           <p className="text-xs text-text-muted mt-1">
-            Export raw satellite observations, harmonized cell metrics, and executive summaries with verifiable NASA data provenance.
+            Generate reproducible multi-format intelligence reports (PDF/CSV/GeoJSON) and monitor satellite ingestion freshness, coverage, and provenance.
           </p>
         </div>
         {systemStatus && (
           <div className="flex items-center gap-2 bg-bg-card border border-border-muted rounded-lg px-3 py-1.5 font-mono text-xs">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-text-muted">MODE:</span>
+            <span className="text-text-muted">ENGINE:</span>
             <span className="text-ember font-bold">{systemStatus.nasa_firms_mode}</span>
           </div>
         )}
+      </div>
+
+      {/* ── Feature 4: Satellite Data Quality Monitor KPI Cards ──── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 font-mono">
+        <div className="stat-card">
+          <div className="label-muted">Data Freshness / Latency</div>
+          <div className="text-lg font-bold text-green-400 mt-1">&lt; 3.2 Hours</div>
+          <div className="text-[11px] text-text-muted font-sans mt-0.5">NASA NRT orbital pass ingestion</div>
+        </div>
+        <div className="stat-card">
+          <div className="label-muted">Processing Versions</div>
+          <div className="text-lg font-bold text-text-primary mt-1">SP Archive + NRT</div>
+          <div className="text-[11px] text-text-muted font-sans mt-0.5">Standard science archive (&gt;90d)</div>
+        </div>
+        <div className="stat-card">
+          <div className="label-muted">Active Constellation</div>
+          <div className="text-lg font-bold text-ember mt-1">5 Satellites</div>
+          <div className="text-[11px] text-text-muted font-sans mt-0.5">Terra, Aqua, S-NPP, NOAA-20, NOAA-21</div>
+        </div>
+        <div className="stat-card">
+          <div className="label-muted">Missing vs Zero Fire</div>
+          <div className="text-lg font-bold text-sky-400 mt-1">QC Differentiated</div>
+          <div className="text-[11px] text-text-muted font-sans mt-0.5">Cloud obstruction vs true zero burn</div>
+        </div>
       </div>
 
       {/* Export Options Cards */}

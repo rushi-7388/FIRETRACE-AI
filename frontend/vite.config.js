@@ -7,5 +7,18 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8000'
     }
+  },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom', 'zustand', 'axios'],
+          leaflet: ['leaflet', 'react-leaflet'],
+          charts: ['recharts'],
+          icons: ['lucide-react']
+        }
+      }
+    }
   }
 })

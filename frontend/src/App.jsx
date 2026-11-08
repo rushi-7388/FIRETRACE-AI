@@ -14,14 +14,14 @@ import {
 import clsx from 'clsx'
 
 const NAV_LINKS = [
-  { to: '/',            label: 'Executive',     icon: Flame },
-  { to: '/map',         label: 'Fire Map',      icon: Globe },
-  { to: '/calendar',    label: 'Calendar',      icon: Calendar },
-  { to: '/compare',     label: 'Sensor Bias',   icon: BarChart2 },
-  { to: '/analytics',   label: 'Regional',      icon: MapPin },
-  { to: '/anomalies',   label: 'Anomalies',     icon: Zap },
-  { to: '/reports',     label: 'Reports',       icon: Download },
-  { to: '/methodology', label: 'Methodology',   icon: BookOpen },
+  { to: '/',            label: 'Executive',        icon: Flame },
+  { to: '/map',         label: 'Smart AOI Map',    icon: Globe },
+  { to: '/calendar',    label: 'Season Calendar',  icon: Calendar },
+  { to: '/compare',     label: 'Overlap Lab',      icon: BarChart2 },
+  { to: '/analytics',   label: 'Regional & FRP',   icon: MapPin },
+  { to: '/anomalies',   label: 'Anomaly Engine',   icon: Zap },
+  { to: '/reports',     label: 'Reports & Quality',icon: Download },
+  { to: '/methodology', label: 'Methodology',      icon: BookOpen },
 ]
 
 function Navbar() {

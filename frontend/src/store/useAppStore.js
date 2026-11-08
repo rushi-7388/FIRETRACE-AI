@@ -95,6 +95,8 @@ function generateMockHotspots(bbox) {
 const useAppStore = create((set, get) => ({
   // ── State ──────────────────────────────────────────────────
   bbox:           [72.0, 20.0, 74.5, 22.0], // [minLon, minLat, maxLon, maxLat]
+  aoiAreaKm2:     null,
+  aoiName:        'Surat / South Gujarat',
   dateRange:      { start: '2000-01', end: '2024-12' },
   sensor:         'both',                    // 'modis' | 'viirs' | 'both'
   harmonizedData: null,                      // array of calendar rows
@@ -106,6 +108,11 @@ const useAppStore = create((set, get) => ({
 
   // ── Actions ────────────────────────────────────────────────
   setBbox: (bbox) => set({ bbox }),
+
+  setBboxAndRefetch: async (bbox, areaKm2 = null, name = 'Custom Drawn AOI') => {
+    set({ bbox, aoiAreaKm2: areaKm2, aoiName: name })
+    await Promise.all([get().fetchHarmonized(), get().fetchHotspots()])
+  },
 
   setDateRange: (dateRange) => set({ dateRange }),
 

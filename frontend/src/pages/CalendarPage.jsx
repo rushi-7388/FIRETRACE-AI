@@ -1,15 +1,47 @@
 import { useState, useMemo } from 'react'
 import useAppStore from '../store/useAppStore.js'
 import BurnCalendar from '../components/Calendar/BurnCalendar.jsx'
-import { Calendar, Search, Eye, AlertCircle, BarChart2, Layers } from 'lucide-react'
+import { Calendar, Search, Eye, AlertCircle, BarChart2, Layers, Flame, TrendingUp, AlertTriangle, ShieldCheck } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
 export default function CalendarPage() {
-  const { calendarData, loading, bbox } = useAppStore()
+  const { calendarData, loading, bbox, aoiName } = useAppStore()
   const [selectedCell, setSelectedCell] = useState(null)
   const [inspectData, setInspectData] = useState(null)
   const [inspectLoading, setInspectLoading] = useState(false)
+
+  // Historical Fire Season Intelligence derivation
+  const fireSeasonIntel = useMemo(() => {
+    if (!calendarData || calendarData.length === 0) return null
+    const monthSums = {}
+    for (let m = 1; m <= 12; m++) {
+      const recs = calendarData.filter((d) => d.month === m)
+      if (recs.length) {
+        monthSums[m] = recs.reduce((acc, r) => acc + (r.hdi || 0), 0)
+      }
+    }
+    const peakMonthNum = Object.keys(monthSums).reduce((a, b) => (monthSums[a] > monthSums[b] ? a : b), 3)
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    const peakMonthName = monthNames[peakMonthNum - 1]
+
+    const latestRec = calendarData[calendarData.length - 1]
+    const curHdi = latestRec?.hdi || 0
+    const curMed = latestRec?.historical_median || 1
+    const pctDiff = curMed > 0 ? ((curHdi - curMed) / curMed) * 100 : 0
+    const isCritical = pctDiff >= 30 || Math.abs(latestRec?.z_score || 0) >= 2.0
+
+    return {
+      peakMonth: peakMonthName,
+      primarySeason: 'March – May (Pre-Monsoon Dry Peak)',
+      secondarySeason: 'October – November (Post-Harvest Stubble)',
+      currentPeriod: `${latestRec?.year || 2024}-${String(latestRec?.month || 12).padStart(2, '0')}`,
+      currentHdi: curHdi.toFixed(2),
+      historicalMedian: curMed.toFixed(2),
+      percentDiff: pctDiff.toFixed(1),
+      isCritical,
+    }
+  }, [calendarData])
 
   // Calculate dynamic baseline table from NASA observations
   const monthlyBaselines = useMemo(() => {
@@ -78,7 +110,41 @@ export default function CalendarPage() {
             Harmonized MODIS & VIIRS active fire observations aggregated on a 10 km equal-area grid.
           </p>
         </div>
+        <div className="text-xs font-mono bg-bg-card border border-border-muted px-3 py-1.5 rounded-lg text-text-muted">
+          AOI: <strong className="text-ember">{aoiName || 'Selected AOI'}</strong>
+        </div>
       </div>
+
+      {/* ── Feature 3: Historical Fire Season Intelligence Cards ──────────────── */}
+      {fireSeasonIntel && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="stat-card">
+            <div className="label-muted">Primary Fire Season</div>
+            <div className="text-sm font-bold text-ember mt-1">{fireSeasonIntel.primarySeason}</div>
+            <div className="text-[11px] text-text-muted mt-0.5">Climatological annual peak</div>
+          </div>
+          <div className="stat-card">
+            <div className="label-muted">Historical Peak Month</div>
+            <div className="text-sm font-bold text-text-primary mt-1">{fireSeasonIntel.peakMonth}</div>
+            <div className="text-[11px] text-text-muted mt-0.5">Highest 25-yr median density</div>
+          </div>
+          <div className="stat-card">
+            <div className="label-muted">Current vs Historical Median</div>
+            <div className="text-sm font-bold font-mono mt-1" style={{ color: Number(fireSeasonIntel.percentDiff) > 0 ? '#FF4500' : '#4ADE80' }}>
+              {Number(fireSeasonIntel.percentDiff) > 0 ? `+${fireSeasonIntel.percentDiff}%` : `${fireSeasonIntel.percentDiff}%`}
+            </div>
+            <div className="text-[11px] text-text-muted mt-0.5">Period {fireSeasonIntel.currentPeriod} (HDI: {fireSeasonIntel.currentHdi})</div>
+          </div>
+          <div className="stat-card">
+            <div className="label-muted">Critical Period Status</div>
+            <div className={`text-sm font-bold mt-1 flex items-center gap-1.5 ${fireSeasonIntel.isCritical ? 'text-red-400' : 'text-green-400'}`}>
+              {fireSeasonIntel.isCritical ? <AlertTriangle size={14} className="animate-pulse" /> : <ShieldCheck size={14} />}
+              <span>{fireSeasonIntel.isCritical ? 'CRITICAL PERIOD ACTIVE' : 'NORMAL ACTIVITY LEVEL'}</span>
+            </div>
+            <div className="text-[11px] text-text-muted mt-0.5">Relative to 25-yr baseline</div>
+          </div>
+        </div>
+      )}
 
       {/* Main Heatmap Calendar */}
       <div className="bg-bg-card border border-border-muted rounded-xl p-4">
