@@ -1,0 +1,151 @@
+"""
+routes/export.py
+================
+Multi-format report generation:
+  - CSV (selected observations / harmonized series)
+  - GeoJSON (spatial point features with original metadata)
+  - JSON (structured satellite observations & metadata)
+  - PDF Report Summary (executive analytics data for printing/downloading)
+"""
+
+from __future__ import annotations
+
+import io
+import json
+import logging
+from datetime import date
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
+
+from services.firms_client import fetch_satellite_data
+from services.harmonizer import harmonize_observations
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/export", tags=["export"])
+
+
+class ExportRequest(BaseModel):
+    bbox: str = Field(..., description="min_lon,min_lat,max_lon,max_lat")
+    start_date: str = Field(...)
+    end_date: str = Field(...)
+    satellites: Optional[List[str]] = Field(default=None)
+    format: str = Field(default="csv", description="csv, geojson, json, or pdf_summary")
+
+
+def _parse_bbox(bbox_str: str) -> tuple[float, float, float, float]:
+    parts = bbox_str.split(",")
+    if len(parts) != 4:
+        raise HTTPException(status_code=422, detail="bbox must be 'min_lon,min_lat,max_lon,max_lat'")
+    return float(parts[0]), float(parts[1]), float(parts[2]), float(parts[3])
+
+
+@router.post("/data", summary="Export observations or harmonized data in multiple formats")
+async def export_data(req: ExportRequest):
+    min_lon, min_lat, max_lon, max_lat = _parse_bbox(req.bbox)
+    try:
+        sd = date.fromisoformat(req.start_date if len(req.start_date) == 10 else f"{req.start_date}-01")
+        ed = date.fromisoformat(req.end_date if len(req.end_date) == 10 else f"{req.end_date}-28")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=f"Invalid date: {exc}")
+
+    raw_df = await fetch_satellite_data(min_lat, min_lon, max_lat, max_lon, sd, ed, req.satellites)
+
+    # 1. CSV Format
+    if req.format.lower() == "csv":
+        buf = io.StringIO()
+        raw_df.to_csv(buf, index=False)
+        buf.seek(0)
+        return StreamingResponse(
+            buf,
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=firetrace_nasa_hotspots_{sd}_{ed}.csv"},
+        )
+
+    # 2. GeoJSON Format
+    elif req.format.lower() == "geojson":
+        features = []
+        for _, row in raw_df.iterrows():
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [float(row["longitude"]), float(row["latitude"])],
+                },
+                "properties": {
+                    "acq_date": str(row["acq_date"]),
+                    "acq_time": str(row["acq_time"]),
+                    "frp": float(row["frp"]),
+                    "confidence_raw": str(row["confidence_raw"]),
+                    "confidence_norm": int(row["confidence_norm"]),
+                    "satellite": str(row["satellite"]),
+                    "sensor": str(row["sensor"]),
+                    "processing_type": str(row["processing_type"]),
+                },
+            })
+        geojson_obj = {
+            "type": "FeatureCollection",
+            "features": features,
+            "metadata": {
+                "source": "NASA FIRMS MODIS & VIIRS",
+                "bbox": req.bbox,
+                "date_range": [sd.isoformat(), ed.isoformat()],
+                "count": len(features),
+            },
+        }
+        buf = io.StringIO(json.dumps(geojson_obj, indent=2))
+        return StreamingResponse(
+            buf,
+            media_type="application/geo+json",
+            headers={"Content-Disposition": f"attachment; filename=firetrace_nasa_hotspots_{sd}_{ed}.geojson"},
+        )
+
+    # 3. JSON Format
+    elif req.format.lower() == "json":
+        data_list = raw_df.to_dict(orient="records")
+        buf = io.StringIO(json.dumps(data_list, indent=2, default=str))
+        return StreamingResponse(
+            buf,
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename=firetrace_nasa_hotspots_{sd}_{ed}.json"},
+        )
+
+    # 4. PDF / Executive Summary Data
+    else:
+        harm = harmonize_observations(raw_df)
+        summary_doc = {
+            "title": "NASA Space Apps 2026 — FIRETRACE AI Fire Intelligence Report",
+            "region_bbox": req.bbox,
+            "date_window": f"{sd.isoformat()} to {ed.isoformat()}",
+            "satellites_included": req.satellites or ["TERRA", "AQUA", "SNPP", "NOAA20", "NOAA21"],
+            "total_observations": harm["summary"]["total_observations"],
+            "modis_count": harm["summary"]["modis_total"],
+            "viirs_count": harm["summary"]["viirs_total"],
+            "peak_fire_period": harm["summary"]["peak_month"],
+            "mean_frp_mw": harm["summary"]["overall_mean_frp"],
+            "anomalies_identified": harm["summary"]["anomaly_count"],
+            "scientific_methodology": (
+                "Harmonized using a 10 km equal-area sinusoidal grid and empirical "
+                "sensor bias factors calibrated across the 2012-2022 overlap period."
+            ),
+            "disclaimer": (
+                "NASA FIRMS thermal anomalies indicate surface hotspots, not confirmed "
+                "wildfire perimeters or predictive emergency forecasts."
+            ),
+        }
+        buf = io.StringIO(json.dumps(summary_doc, indent=2))
+        return StreamingResponse(
+            buf,
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename=firetrace_executive_summary_{sd}_{ed}.json"},
+        )
+
+
+@router.post("/csv", summary="Backward-compatible CSV download")
+async def export_csv(req: ExportRequest):
+    req.format = "csv"
+    return await export_data(req)
