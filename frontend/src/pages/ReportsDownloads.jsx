@@ -1,12 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useAppStore from '../store/useAppStore.js'
-import { Download, FileText, Globe, Database, FileSpreadsheet, CheckCircle2, Shield } from 'lucide-react'
+import { Download, FileText, Globe, Database, FileSpreadsheet, CheckCircle2, Shield, Activity, Satellite, Clock } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
 export default function ReportsDownloads() {
   const { bbox, dateRange, calendarData } = useAppStore()
   const [downloading, setDownloading] = useState(false)
+  const [provenance, setProvenance] = useState(null)
+  const [systemStatus, setSystemStatus] = useState(null)
+
+  useEffect(() => {
+    axios.get('/api/provenance')
+      .then(res => setProvenance(res.data))
+      .catch(() => {})
+
+    axios.get('/api/status')
+      .then(res => setSystemStatus(res.data))
+      .catch(() => {})
+  }, [])
 
   const triggerDownload = async (format) => {
     setDownloading(true)
@@ -26,7 +38,8 @@ export default function ReportsDownloads() {
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `firetrace_${format}_export.${format === 'pdf_summary' ? 'json' : format}`)
+      const ext = format === 'pdf_summary' ? 'pdf' : format
+      link.setAttribute('download', `firetrace_${format}_export.${ext}`)
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -40,15 +53,24 @@ export default function ReportsDownloads() {
 
   return (
     <div className="p-4 space-y-4 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="border-b border-border-muted pb-4">
-        <h1 className="text-xl font-bold text-text-primary flex items-center gap-2">
-          <Download className="text-ember" size={22} />
-          Multi-Format Data Export & Provenance Reports
-        </h1>
-        <p className="text-xs text-text-muted mt-1">
-          Export raw satellite observations, harmonized cell metrics, and executive summaries with verifiable NASA data provenance.
-        </p>
+      {/* Header with Live Status Badge */}
+      <div className="border-b border-border-muted pb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-text-primary flex items-center gap-2">
+            <Download className="text-ember" size={22} />
+            Multi-Format Data Export & Provenance Reports
+          </h1>
+          <p className="text-xs text-text-muted mt-1">
+            Export raw satellite observations, harmonized cell metrics, and executive summaries with verifiable NASA data provenance.
+          </p>
+        </div>
+        {systemStatus && (
+          <div className="flex items-center gap-2 bg-bg-card border border-border-muted rounded-lg px-3 py-1.5 font-mono text-xs">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-text-muted">MODE:</span>
+            <span className="text-ember font-bold">{systemStatus.nasa_firms_mode}</span>
+          </div>
+        )}
       </div>
 
       {/* Export Options Cards */}
@@ -113,7 +135,7 @@ export default function ReportsDownloads() {
             <FileText size={24} className="text-green-400 mb-2" />
             <h3 className="text-sm font-semibold text-text-primary">Executive Intelligence Report</h3>
             <p className="text-xs text-text-muted mt-1">
-              Standardized report summary containing spatial bounds, active fire seasons, total observations, and official NASA methodology disclaimers.
+              Official PDF executive report containing spatial bounds, active fire seasons, total observations, and official NASA methodology disclaimers.
             </p>
           </div>
           <button
@@ -121,10 +143,76 @@ export default function ReportsDownloads() {
             disabled={downloading}
             className="mt-4 w-full py-2 bg-bg-secondary hover:border-green-400 border border-border-muted rounded-lg text-xs font-medium text-text-primary flex items-center justify-center gap-1.5 transition-colors"
           >
-            <Download size={14} /> Download Summary
+            <Download size={14} /> Download Official PDF
           </button>
         </div>
       </div>
+
+      {/* Live Data Provenance & Sensor Constellation Inventory */}
+      {provenance && (
+        <div className="bg-bg-card border border-border-muted rounded-xl p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+              <Satellite size={16} className="text-ember" />
+              Registered Satellite & Sensor Constellation
+            </h3>
+            <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+              NASA MAP_KEY Secured Server-Side
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+            {provenance.satellites?.map(sat => (
+              <div key={sat.satellite_id} className="bg-bg-secondary border border-border-muted rounded-lg p-3 text-xs space-y-1">
+                <div className="font-semibold text-text-primary">{sat.name}</div>
+                <div className="text-text-muted text-[11px]">Agency: <span className="text-ember">{sat.agency}</span></div>
+                <div className="text-text-muted text-[11px]">Launch: {sat.launch_date}</div>
+                <div className="text-[10px] text-green-400 font-mono">STATUS: {sat.status.toUpperCase()}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Ingestion Audit Trail */}
+          {provenance.recent_ingestion_logs && provenance.recent_ingestion_logs.length > 0 && (
+            <div className="space-y-2 mt-4 pt-3 border-t border-border-muted">
+              <div className="flex items-center gap-2 text-xs font-semibold text-text-primary">
+                <Clock size={14} className="text-ember" />
+                Recent Ingestion Audit Log (Database Provenance Records)
+              </div>
+              <div className="overflow-x-auto max-h-48 border border-border-muted rounded-lg">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="bg-bg-secondary text-text-muted border-b border-border-muted text-[11px]">
+                    <tr>
+                      <th className="p-2">Log ID</th>
+                      <th className="p-2">Product</th>
+                      <th className="p-2">Span</th>
+                      <th className="p-2">Detections</th>
+                      <th className="p-2">Status</th>
+                      <th className="p-2">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-muted text-[11px]">
+                    {provenance.recent_ingestion_logs.map(log => (
+                      <tr key={log.log_id} className="hover:bg-bg-hover">
+                        <td className="p-2 text-text-muted">#{log.log_id}</td>
+                        <td className="p-2 text-text-primary font-semibold">{log.product}</td>
+                        <td className="p-2 text-text-muted">{log.date_start} → {log.date_end}</td>
+                        <td className="p-2 text-ember font-bold">{log.records_retrieved.toLocaleString()}</td>
+                        <td className="p-2">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/10 text-green-400 border border-green-500/20">
+                            {log.status}
+                          </span>
+                        </td>
+                        <td className="p-2 text-text-muted">{log.created_at}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Provenance & Compliance Notice */}
       <div className="bg-bg-card border border-border-muted rounded-xl p-4 space-y-3">

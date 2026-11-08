@@ -173,7 +173,7 @@ async def inspect_observations(
 
 
 @router.get("/validation/overlap", summary="Scientific overlap-period sensitivity analysis (2012-2022)")
-async def get_overlap_validation():
+def get_overlap_validation():
     """
     Returns empirical comparison statistics between MODIS and VIIRS during the
     collocated overlap mission period (2012-2022).
@@ -214,10 +214,12 @@ async def get_overlap_validation():
 @router.get("/anomalies/ranking", summary="Top historical fire anomalies ranked by Z-Score")
 async def get_anomaly_ranking(
     bbox: Optional[str] = Query(default="72.0,20.0,74.5,22.0"),
+    start_year: Optional[int] = Query(default=2018, description="Baseline comparison start year"),
 ):
     min_lon, min_lat, max_lon, max_lat = _parse_bbox(bbox)
     today = date.today()
-    raw_df = await fetch_satellite_data(min_lat, min_lon, max_lat, max_lon, date(2000, 1, 1), today)
+    sd = date(start_year, 1, 1) if start_year else date(2018, 1, 1)
+    raw_df = await fetch_satellite_data(min_lat, min_lon, max_lat, max_lon, sd, today)
     harm = harmonize_observations(raw_df, 10.0)
 
     anomalies = [r for r in harm["monthly"] if r.get("is_anomaly")]

@@ -32,7 +32,7 @@ jobs:
 
       - name: Run Scientific Harmonization Tests
         run: |
-          python -m pytest -v
+          PYTHONPATH=. python -m pytest -v
 
   build-frontend:
     name: Frontend Vite Production Build
@@ -57,3 +57,4 @@ jobs:
 
       - name: Build Vite Production Assets
         run: npm run build
+

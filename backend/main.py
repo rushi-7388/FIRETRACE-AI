@@ -15,6 +15,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from database.db_manager import init_database, get_ingestion_logs, get_db_connection
+
 load_dotenv()
 
 # ---------------------------------------------------------------------------
@@ -27,6 +29,11 @@ async def lifespan(app: FastAPI):
     cache_dir = os.getenv("CACHE_DIR", "./cache")
     os.makedirs(cache_dir, exist_ok=True)
     print(f"[FIRETRACE-AI] Cache directory ready → {os.path.abspath(cache_dir)}")
+    try:
+        init_database()
+        print("[FIRETRACE-AI] Database & provenance schema initialized.")
+    except Exception as exc:
+        print(f"[FIRETRACE-AI] DB init warning: {exc}")
     yield
     print("[FIRETRACE-AI] Shutting down.")
 
@@ -68,12 +75,52 @@ app.include_router(harmonize_router, prefix="/api")
 app.include_router(export_router, prefix="/api")
 
 
+@app.get("/api/provenance", tags=["provenance"])
+def get_provenance():
+    """Retrieve data provenance, registered satellite configurations, and ingestion audit logs."""
+    logs = get_ingestion_logs()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM satellites")
+    satellites = [dict(r) for r in cur.fetchall()]
+    cur.execute("SELECT * FROM sensors")
+    sensors = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return {
+        "status": "operational",
+        "nasa_firms_key_configured": bool(os.getenv("NASA_MAP_KEY") or os.getenv("FIRMS_API_KEY")),
+        "satellites": satellites,
+        "sensors": sensors,
+        "recent_ingestion_logs": logs,
+    }
+
+
+@app.get("/api/status", tags=["info"])
+def get_system_status():
+    """System health check & NASA FIRMS connection status."""
+    has_key = bool(os.getenv("NASA_MAP_KEY") or os.getenv("FIRMS_API_KEY"))
+    return {
+        "status": "online",
+        "service": "FIRETRACE-AI",
+        "version": "1.0.0",
+        "nasa_firms_mode": "LIVE_DIRECT_INGESTION" if has_key else "STANDALONE_SYNTHETIC_CALIBRATED",
+        "capabilities": [
+            "MODIS_VIIRS_HARMONIZATION",
+            "10KM_EQUAL_AREA_SINUSOIDAL_GRID",
+            "HOTSPOT_DENSITY_INDEX",
+            "FRP_CALIBRATION",
+            "Z_SCORE_ANOMALY_DETECTION",
+            "EXECUTIVE_PDF_EXPORT",
+        ],
+    }
+
+
 # ---------------------------------------------------------------------------
 # Root
 # ---------------------------------------------------------------------------
 
 @app.get("/", tags=["info"])
-async def root():
+def root():
     """API information and available endpoints."""
     return {
         "project": "FIRETRACE-AI",

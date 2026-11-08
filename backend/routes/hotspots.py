@@ -128,7 +128,7 @@ async def get_hotspots(
     bbox: Optional[str] = Query(
         default=None,
         description="Bounding box as 'min_lon,min_lat,max_lon,max_lat'",
-        example="-120,30,-100,50",
+        examples=["-120,30,-100,50"],
     ),
     min_lon: Optional[float] = Query(default=None),
     min_lat: Optional[float] = Query(default=None),

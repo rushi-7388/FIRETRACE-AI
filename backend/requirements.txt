@@ -9,3 +9,5 @@ pydantic==2.7.1
 python-multipart==0.0.9
 aiofiles==23.2.1
 fastapi-cache2==0.2.1
+reportlab>=4.0.0
+

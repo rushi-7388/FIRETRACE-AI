@@ -114,34 +114,31 @@ async def export_data(req: ExportRequest):
             headers={"Content-Disposition": f"attachment; filename=firetrace_nasa_hotspots_{sd}_{ed}.json"},
         )
 
-    # 4. PDF / Executive Summary Data
-    else:
+    # 4. Official NASA PDF Executive Report
+    elif req.format.lower() in ("pdf", "pdf_summary"):
+        from services.pdf_generator import generate_executive_pdf_report
         harm = harmonize_observations(raw_df)
-        summary_doc = {
-            "title": "NASA Space Apps 2026 — FIRETRACE AI Fire Intelligence Report",
-            "region_bbox": req.bbox,
-            "date_window": f"{sd.isoformat()} to {ed.isoformat()}",
-            "satellites_included": req.satellites or ["TERRA", "AQUA", "SNPP", "NOAA20", "NOAA21"],
-            "total_observations": harm["summary"]["total_observations"],
-            "modis_count": harm["summary"]["modis_total"],
-            "viirs_count": harm["summary"]["viirs_total"],
-            "peak_fire_period": harm["summary"]["peak_month"],
-            "mean_frp_mw": harm["summary"]["overall_mean_frp"],
-            "anomalies_identified": harm["summary"]["anomaly_count"],
-            "scientific_methodology": (
-                "Harmonized using a 10 km equal-area sinusoidal grid and empirical "
-                "sensor bias factors calibrated across the 2012-2022 overlap period."
-            ),
-            "disclaimer": (
-                "NASA FIRMS thermal anomalies indicate surface hotspots, not confirmed "
-                "wildfire perimeters or predictive emergency forecasts."
-            ),
-        }
-        buf = io.StringIO(json.dumps(summary_doc, indent=2))
+        anomalies = [r for r in harm.get("monthly", []) if r.get("is_anomaly")]
+        anomalies.sort(key=lambda x: abs(x.get("z_score", 0)), reverse=True)
+
+        pdf_bytes = generate_executive_pdf_report(
+            bbox=req.bbox,
+            date_start=sd.isoformat(),
+            date_end=ed.isoformat(),
+            satellites=req.satellites or ["TERRA", "AQUA", "SNPP", "NOAA20", "NOAA21"],
+            total_obs=harm["summary"]["total_observations"],
+            modis_count=harm["summary"]["modis_total"],
+            viirs_count=harm["summary"]["viirs_total"],
+            overall_mean_frp=harm["summary"]["overall_mean_frp"],
+            peak_month=harm["summary"]["peak_month"],
+            anomaly_count=harm["summary"]["anomaly_count"],
+            top_anomalies=anomalies[:5],
+        )
+
         return StreamingResponse(
-            buf,
-            media_type="application/json",
-            headers={"Content-Disposition": f"attachment; filename=firetrace_executive_summary_{sd}_{ed}.json"},
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=firetrace_nasa_executive_report_{sd}_{ed}.pdf"},
         )
 
 
