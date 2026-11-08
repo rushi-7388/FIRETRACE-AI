@@ -101,3 +101,4 @@
 ### Q4: *"Can this be used outside Surat?"*
 **Answer:**
 > *"Yes, 100%. Our platform is global. While we preloaded Surat, Ahmedabad, and Gujarat state boundaries to demonstrate local operational value to the Surat judging panel, users can draw a bounding polygon anywhere on Earth—from the Amazon basin to Australian bushland—and instantly generate a 25-year harmonized burning calendar."*
+

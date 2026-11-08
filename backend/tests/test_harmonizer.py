@@ -74,3 +74,4 @@ def test_harmonize_observations_pipeline():
     assert result["summary"]["total_observations"] == 3
     assert result["summary"]["modis_total"] == 2
     assert result["summary"]["viirs_total"] == 1
+
