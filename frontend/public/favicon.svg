@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="fireGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#800026"/>
+      <stop offset="30%" stop-color="#FC4E2A"/>
+      <stop offset="70%" stop-color="#FEB24C"/>
+      <stop offset="100%" stop-color="#FFFFCC"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="20" fill="#0D1117"/>
+  <path d="M50 12 C40 28, 25 40, 25 62 C25 78, 36 88, 50 88 C64 88, 75 78, 75 62 C75 40, 60 28, 50 12 Z" fill="url(#fireGrad)"/>
+  <path d="M50 38 C44 48, 36 56, 36 68 C36 78, 42 82, 50 82 C58 82, 64 78, 64 68 C64 56, 56 48, 50 38 Z" fill="#FFE57F"/>
+  <circle cx="50" cy="50" r="42" fill="none" stroke="#FF4500" stroke-width="2" stroke-dasharray="6,4" opacity="0.6"/>
+</svg>
