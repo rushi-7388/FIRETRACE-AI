@@ -1,4 +1,4 @@
-# 🔥 FIRETRACE AI — Satellite Wildfire Intelligence & Harmonized Burning Activity Calendar
+# 🔥 FIRETRACE AI - Satellite Wildfire Intelligence & Harmonized Burning Activity Calendar
 ### 🚀 NASA Space Apps Challenge 2026 · Surat Region Entry
 **Challenge Track:** Earth Science & Remote Sensing Software  
 **Problem Statement:** *Harmonization of MODIS and VIIRS Hot Spots*

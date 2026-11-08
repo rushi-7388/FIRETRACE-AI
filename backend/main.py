@@ -1,5 +1,5 @@
 """
-FIRETRACE-AI — FastAPI Backend
+FIRETRACE-AI - FastAPI Backend
 NASA Space Apps 2026
 
 Harmonizes MODIS and VIIRS satellite fire hotspot data to deliver
@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="FIRETRACE-AI API",
     description=(
-        "NASA Space Apps 2026 — Harmonizes MODIS and VIIRS satellite fire "
+        "NASA Space Apps 2026 - Harmonizes MODIS and VIIRS satellite fire "
         "hotspot data into a unified Hotspot Density Index (HDI) with "
         "temporal anomaly detection."
     ),
@@ -53,7 +53,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow all origins for hackathon / demo purposes
+# CORS - allow all origins for hackathon / demo purposes
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -132,10 +132,10 @@ def root():
         ),
         "version": "1.0.0",
         "endpoints": {
-            "hotspots": "GET  /api/hotspots  — Raw GeoJSON hotspot features",
-            "harmonize": "POST /api/harmonize — Full harmonization pipeline",
-            "calendar": "GET  /api/calendar  — Calendar matrix + monthly stats",
-            "export_csv": "POST /api/export/csv — Download harmonized CSV",
+            "hotspots": "GET  /api/hotspots  - Raw GeoJSON hotspot features",
+            "harmonize": "POST /api/harmonize - Full harmonization pipeline",
+            "calendar": "GET  /api/calendar  - Calendar matrix + monthly stats",
+            "export_csv": "POST /api/export/csv - Download harmonized CSV",
         },
         "docs": "/docs",
         "redoc": "/redoc",

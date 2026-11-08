@@ -350,7 +350,7 @@ async def fetch_satellite_data(
     frames: List[pd.DataFrame] = []
 
     if not api_key:
-        logger.info("NASA API key not detected — deploying verified NASA statistical synthetic engine.")
+        logger.info("NASA API key not detected - deploying verified NASA statistical synthetic engine.")
         seed_map = {"TERRA": 42, "AQUA": 43, "SNPP": 100, "NOAA20": 200, "NOAA21": 300}
         for sat in satellites:
             meta = SATELLITE_CATALOG.get(sat.upper(), {"sensor": "VIIRS", "start_year": 2012})

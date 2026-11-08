@@ -1,14 +1,14 @@
 """
 routes/hotspots.py
 ==================
-GET /api/hotspots — Raw GeoJSON FeatureCollection of fire hotspot points.
+GET /api/hotspots - Raw GeoJSON FeatureCollection of fire hotspot points.
 
 Query parameters
 ----------------
-bbox        : str  — "min_lon,min_lat,max_lon,max_lat"  (default: global)
-start_date  : str  — YYYY-MM-DD  (default: 7 days ago)
-end_date    : str  — YYYY-MM-DD  (default: today)
-sensor      : str  — "modis" | "viirs" | "both"  (default: "both")
+bbox        : str  - "min_lon,min_lat,max_lon,max_lat"  (default: global)
+start_date  : str  - YYYY-MM-DD  (default: 7 days ago)
+end_date    : str  - YYYY-MM-DD  (default: today)
+sensor      : str  - "modis" | "viirs" | "both"  (default: "both")
 """
 
 from __future__ import annotations
@@ -192,7 +192,7 @@ async def get_hotspots(
 
     combined = pd.concat(frames, ignore_index=True)
 
-    # Filter rows that fall inside the bbox (defensive — FIRMS occasionally
+    # Filter rows that fall inside the bbox (defensive - FIRMS occasionally
     # returns a wider area than requested)
     combined = combined[
         (combined["latitude"] >= p_min_lat) & (combined["latitude"] <= p_max_lat) &

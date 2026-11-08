@@ -19,7 +19,7 @@ function CustomTooltip({ active, payload, label }) {
       {payload.map((p) => (
         <div key={p.dataKey} className="flex justify-between gap-4 mb-1">
           <span style={{ color: p.color }}>{p.name}</span>
-          <span className="font-mono text-text-primary">{p.value != null ? p.value.toFixed(2) : '—'}</span>
+          <span className="font-mono text-text-primary">{p.value != null ? p.value.toFixed(2) : '-'}</span>
         </div>
       ))}
       {data.is_anomaly && (
@@ -42,26 +42,26 @@ const PEAK_YEARS = [2004, 2009, 2015, 2019, 2023]
 // ─── TimeSeriesChart ──────────────────────────────────────────────────────────
 export default function TimeSeriesChart() {
   const calendarData = useAppStore(s => s.calendarData)
-  const loading      = useAppStore(s => s.loading)
+  const loading = useAppStore(s => s.loading)
 
   const chartData = useMemo(() => {
     if (!calendarData) return []
 
     return calendarData.map(d => ({
-      label:            formatDate(d.year, d.month),
-      year:             d.year,
-      month:            d.month,
-      harmonized:       d.hdi,
-      modis:            d.modis_count  != null ? +(d.modis_count  / 5).toFixed(2) : null,
-      viirs:            d.viirs_count  != null ? +(d.viirs_count  / 5).toFixed(2) : null,
-      medianLow:        d.historical_median != null
-                          ? Math.max(0, d.historical_median - (d.historical_iqr ?? 3))
-                          : null,
-      medianHigh:       d.historical_median != null
-                          ? d.historical_median + (d.historical_iqr ?? 3)
-                          : null,
-      z_score:          d.z_score,
-      is_anomaly:       d.is_anomaly,
+      label: formatDate(d.year, d.month),
+      year: d.year,
+      month: d.month,
+      harmonized: d.hdi,
+      modis: d.modis_count != null ? +(d.modis_count / 5).toFixed(2) : null,
+      viirs: d.viirs_count != null ? +(d.viirs_count / 5).toFixed(2) : null,
+      medianLow: d.historical_median != null
+        ? Math.max(0, d.historical_median - (d.historical_iqr ?? 3))
+        : null,
+      medianHigh: d.historical_median != null
+        ? d.historical_median + (d.historical_iqr ?? 3)
+        : null,
+      z_score: d.z_score,
+      is_anomaly: d.is_anomaly,
     }))
   }, [calendarData])
 
@@ -91,7 +91,7 @@ export default function TimeSeriesChart() {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
           <TrendingUp size={15} className="text-ember" />
-          Hotspot Density Index — Time Series
+          Hotspot Density Index - Time Series
         </h3>
         <div className="flex gap-3 text-xs text-text-muted">
           <span className="flex items-center gap-1"><span className="w-5 h-0.5 inline-block bg-blue-400" /> MODIS</span>
@@ -153,9 +153,9 @@ export default function TimeSeriesChart() {
             />
           ))}
 
-          <Line dataKey="modis"      name="MODIS"      stroke="#60A5FA" strokeWidth={1.2} dot={false} connectNulls />
-          <Line dataKey="viirs"      name="VIIRS"      stroke="#FB923C" strokeWidth={1.2} dot={false} connectNulls />
-          <Line dataKey="harmonized" name="Harmonized" stroke="#FFFFFF" strokeWidth={2}   dot={false} connectNulls />
+          <Line dataKey="modis" name="MODIS" stroke="#60A5FA" strokeWidth={1.2} dot={false} connectNulls />
+          <Line dataKey="viirs" name="VIIRS" stroke="#FB923C" strokeWidth={1.2} dot={false} connectNulls />
+          <Line dataKey="harmonized" name="Harmonized" stroke="#FFFFFF" strokeWidth={2} dot={false} connectNulls />
 
           <Brush
             dataKey="label"

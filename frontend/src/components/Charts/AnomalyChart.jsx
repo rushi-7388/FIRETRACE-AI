@@ -25,7 +25,7 @@ function AnomalyTooltip({ active, payload, label }) {
           {formatZScore(d.z_score)}
         </span>
       </p>
-      <p className="text-text-muted mt-1">HDI: {d.hdi?.toFixed(2) ?? '—'}</p>
+      <p className="text-text-muted mt-1">HDI: {d.hdi?.toFixed(2) ?? '-'}</p>
       {d.is_anomaly && (
         <p className="text-cyan-400 font-semibold mt-1">⚡ Anomaly</p>
       )}
@@ -37,20 +37,20 @@ function AnomalyTooltip({ active, payload, label }) {
 function categoryLabel(z) {
   if (z < -2) return 'Extreme low'
   if (z < -1) return 'Below avg'
-  if (z <  1) return 'Near avg'
-  if (z <  2) return 'Above avg'
+  if (z < 1) return 'Near avg'
+  if (z < 2) return 'Above avg'
   return 'Extreme high'
 }
 
 // ─── AnomalyChart ─────────────────────────────────────────────────────────────
 export default function AnomalyChart() {
   const calendarData = useAppStore(s => s.calendarData)
-  const loading      = useAppStore(s => s.loading)
+  const loading = useAppStore(s => s.loading)
 
   // Get available years
   const years = useMemo(() => {
     if (!calendarData) return []
-    return Array.from(new Set(calendarData.map(d => d.year))).sort((a,b) => b - a)
+    return Array.from(new Set(calendarData.map(d => d.year))).sort((a, b) => b - a)
   }, [calendarData])
 
   const [selectedYear, setSelectedYear] = useState(null)
@@ -61,12 +61,12 @@ export default function AnomalyChart() {
     if (!calendarData) return []
     const rows = calendarData.filter(d => d.year === year)
     return Array.from({ length: 12 }, (_, i) => {
-      const m   = i + 1
+      const m = i + 1
       const row = rows.find(d => d.month === m)
       return {
-        month:      monthAbbrev(m),
-        z_score:    row?.z_score ?? 0,
-        hdi:        row?.hdi ?? 0,
+        month: monthAbbrev(m),
+        z_score: row?.z_score ?? 0,
+        hdi: row?.hdi ?? 0,
         is_anomaly: row?.is_anomaly ?? false,
       }
     })
@@ -109,11 +109,11 @@ export default function AnomalyChart() {
       {/* Z-score category legend */}
       <div className="flex gap-2 mb-2 flex-wrap">
         {[
-          { z: -3,  label: 'Extreme low'  },
-          { z: -1.5,label: 'Below avg'    },
-          { z:  0.5,label: 'Near avg'     },
-          { z:  1.5,label: 'Above avg'    },
-          { z:  3,  label: 'Extreme high' },
+          { z: -3, label: 'Extreme low' },
+          { z: -1.5, label: 'Below avg' },
+          { z: 0.5, label: 'Near avg' },
+          { z: 1.5, label: 'Above avg' },
+          { z: 3, label: 'Extreme high' },
         ].map(({ z, label }) => (
           <span key={label} className="flex items-center gap-1 text-xs text-text-muted">
             <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: zscoreToColor(z) }} />
@@ -140,7 +140,7 @@ export default function AnomalyChart() {
           />
           <Tooltip content={<AnomalyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
           <ReferenceLine y={0} stroke="#484F58" strokeWidth={1.5} />
-          <ReferenceLine y={2}  stroke="#FC4E2A" strokeDasharray="4 3" strokeOpacity={0.5} />
+          <ReferenceLine y={2} stroke="#FC4E2A" strokeDasharray="4 3" strokeOpacity={0.5} />
           <ReferenceLine y={-2} stroke="#41B6C4" strokeDasharray="4 3" strokeOpacity={0.5} />
 
           <Bar dataKey="z_score" radius={[3, 3, 0, 0]} maxBarSize={36}>

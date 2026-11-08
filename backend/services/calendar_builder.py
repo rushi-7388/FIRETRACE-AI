@@ -48,9 +48,9 @@ logger = logging.getLogger(__name__)
 #   #FFFFCC (very low), #FEB24C (medium), #FC4E2A (high), #800026 (extreme)
 # ---------------------------------------------------------------------------
 
-# (hdi_percentile_0_to_1, hex_color)  — linear interpolation between knots
+# (hdi_percentile_0_to_1, hex_color)  - linear interpolation between knots
 _COLOR_KNOTS: List[Tuple[float, Tuple[int, int, int]]] = [
-    (0.00, (255, 255, 255)),  # white  — zero / no data
+    (0.00, (255, 255, 255)),  # white  - zero / no data
     (0.01, (255, 255, 204)),  # #FFFFCC
     (0.25, (254, 217, 142)),  # #FED98E
     (0.50, (254, 178,  76)),  # #FEB24C
@@ -143,7 +143,7 @@ def build_calendar(
         # Fall back to any available sensor
         df = harmonized_df.copy()
         logger.warning(
-            "No rows for sensor '%s' — using all sensors.", sensor_filter
+            "No rows for sensor '%s' - using all sensors.", sensor_filter
         )
 
     # Ensure correct types

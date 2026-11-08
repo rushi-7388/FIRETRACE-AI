@@ -7,7 +7,7 @@ function dataToCSV(rows) {
   if (!rows || rows.length === 0) return ''
 
   const headers = Object.keys(rows[0])
-  const lines   = [
+  const lines = [
     headers.join(','),
     ...rows.map(row =>
       headers.map(h => {
@@ -22,9 +22,9 @@ function dataToCSV(rows) {
 // ─── Trigger browser download ─────────────────────────────────────────────────
 function triggerDownload(content, filename, mimeType) {
   const blob = new Blob([content], { type: mimeType })
-  const url  = URL.createObjectURL(blob)
-  const a    = document.createElement('a')
-  a.href     = url
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
   a.download = filename
   document.body.appendChild(a)
   a.click()
@@ -38,28 +38,28 @@ export default function ExportButton() {
 
   const handleCSVDownload = async () => {
     if (!calendarData || calendarData.length === 0) {
-      toast.error('No data to export — run analysis first')
+      toast.error('No data to export - run analysis first')
       return
     }
 
     try {
       // Try the API endpoint first
       const params = new URLSearchParams({
-        min_lon:    bbox[0],
-        min_lat:    bbox[1],
-        max_lon:    bbox[2],
-        max_lat:    bbox[3],
+        min_lon: bbox[0],
+        min_lat: bbox[1],
+        max_lon: bbox[2],
+        max_lat: bbox[3],
         start_date: dateRange.start,
-        end_date:   dateRange.end,
+        end_date: dateRange.end,
         sensor,
       })
 
       const response = await fetch(`/api/export/csv?${params}`)
       if (response.ok) {
         const blob = await response.blob()
-        const url  = URL.createObjectURL(blob)
-        const a    = document.createElement('a')
-        a.href     = url
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
         a.download = `firetrace_export_${dateRange.start}_${dateRange.end}.csv`
         a.click()
         URL.revokeObjectURL(url)
@@ -100,9 +100,9 @@ export default function ExportButton() {
         canvas.toBlob(blob => {
           if (!blob) return
           const url = URL.createObjectURL(blob)
-          const a   = document.createElement('a')
-          a.href    = url
-          a.download = `firetrace_snapshot_${new Date().toISOString().slice(0,10)}.png`
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `firetrace_snapshot_${new Date().toISOString().slice(0, 10)}.png`
           a.click()
           URL.revokeObjectURL(url)
           toast.success('PNG exported!', { id: 'png' })
@@ -114,12 +114,12 @@ export default function ExportButton() {
           toast.error('No SVG chart found', { id: 'png' })
           return
         }
-        const svgData  = new XMLSerializer().serializeToString(svgEl)
-        const svgBlob  = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
-        const url      = URL.createObjectURL(svgBlob)
-        const a        = document.createElement('a')
-        a.href         = url
-        a.download     = `firetrace_calendar_${new Date().toISOString().slice(0,10)}.svg`
+        const svgData = new XMLSerializer().serializeToString(svgEl)
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
+        const url = URL.createObjectURL(svgBlob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `firetrace_calendar_${new Date().toISOString().slice(0, 10)}.svg`
         a.click()
         URL.revokeObjectURL(url)
         toast.success('SVG exported!', { id: 'png' })

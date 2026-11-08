@@ -40,7 +40,7 @@ function CompareTooltip({ active, payload, label }) {
       {payload.map(p => (
         <div key={p.dataKey} className="flex justify-between gap-6 mb-1">
           <span style={{ color: p.color }}>{p.name}</span>
-          <span className="font-mono text-text-primary">{p.value?.toFixed(1) ?? '—'}</span>
+          <span className="font-mono text-text-primary">{p.value?.toFixed(1) ?? '-'}</span>
         </div>
       ))}
     </div>
@@ -56,7 +56,7 @@ export default function Compare() {
     if (!calendarData) fetchHarmonized()
     axios.get('/api/validation/overlap')
       .then(res => setValidationMeta(res.data))
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   // Available years
@@ -73,14 +73,14 @@ export default function Compare() {
     if (!calendarData) return []
     const rows = calendarData.filter(d => d.year === year)
     return Array.from({ length: 12 }, (_, i) => {
-      const m   = i + 1
+      const m = i + 1
       const row = rows.find(d => d.month === m)
       return {
-        month:    monthAbbrev(m),
-        modis:    row?.modis_count  ?? 0,
-        viirs:    row?.viirs_count  ?? 0,
-        hdi:      row?.hdi          ?? 0,
-        z_score:  row?.z_score      ?? 0,
+        month: monthAbbrev(m),
+        modis: row?.modis_count ?? 0,
+        viirs: row?.viirs_count ?? 0,
+        hdi: row?.hdi ?? 0,
+        z_score: row?.z_score ?? 0,
       }
     })
   }, [calendarData, year])
@@ -91,10 +91,10 @@ export default function Compare() {
     return years.map(y => {
       const rows = calendarData.filter(d => d.year === y)
       return {
-        year:  y.toString(),
+        year: y.toString(),
         modis: rows.reduce((s, d) => s + (d.modis_count ?? 0), 0),
         viirs: rows.reduce((s, d) => s + (d.viirs_count ?? 0), 0),
-        hdi:   parseFloat(rows.reduce((s, d) => s + (d.hdi ?? 0), 0).toFixed(1)),
+        hdi: parseFloat(rows.reduce((s, d) => s + (d.hdi ?? 0), 0).toFixed(1)),
       }
     })
   }, [calendarData, years])
@@ -159,7 +159,7 @@ export default function Compare() {
             <BarChart2 size={16} className="text-ember" />
             25-Year Multi-Sensor Detection Trajectory (Raw vs. Harmonized HDI)
           </h2>
-          <span className="text-xs font-mono text-text-muted">2000 — 2024</span>
+          <span className="text-xs font-mono text-text-muted">2000 - 2024</span>
         </div>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={annualData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }} barGap={2}>
@@ -181,9 +181,9 @@ export default function Compare() {
               iconType="square"
               formatter={(v) => <span style={{ color: '#7D8590', fontSize: 11 }}>{v}</span>}
             />
-            <Bar dataKey="modis" name="MODIS (1 km Raw)"      fill="#60A5FA" radius={[2,2,0,0]} maxBarSize={16} />
-            <Bar dataKey="viirs" name="VIIRS (375 m Raw)"     fill="#FB923C" radius={[2,2,0,0]} maxBarSize={16} />
-            <Bar dataKey="hdi"   name="Harmonized HDI Index"  fill="#FF4500" radius={[2,2,0,0]} maxBarSize={16} />
+            <Bar dataKey="modis" name="MODIS (1 km Raw)" fill="#60A5FA" radius={[2, 2, 0, 0]} maxBarSize={16} />
+            <Bar dataKey="viirs" name="VIIRS (375 m Raw)" fill="#FB923C" radius={[2, 2, 0, 0]} maxBarSize={16} />
+            <Bar dataKey="hdi" name="Harmonized HDI Index" fill="#FF4500" radius={[2, 2, 0, 0]} maxBarSize={16} />
 
             {/* VIIRS launch milestone */}
             <ReferenceLine
@@ -207,7 +207,7 @@ export default function Compare() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-text-primary">
-                Monthly Breakdown — Selected Year
+                Monthly Breakdown - Selected Year
               </h2>
               <select
                 value={year}
@@ -225,9 +225,9 @@ export default function Compare() {
                 <YAxis tick={{ fontSize: 10, fill: '#7D8590' }} tickLine={false} axisLine={false} width={35} />
                 <Tooltip content={<CompareTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
                 <Legend iconType="square" formatter={(v) => <span style={{ color: '#7D8590', fontSize: 11 }}>{v}</span>} />
-                <Bar dataKey="modis" name="MODIS" fill="#60A5FA" radius={[2,2,0,0]} maxBarSize={16} />
-                <Bar dataKey="viirs" name="VIIRS" fill="#FB923C" radius={[2,2,0,0]} maxBarSize={16} />
-                <Bar dataKey="hdi"   name="HDI"   fill="#FF4500" radius={[2,2,0,0]} maxBarSize={16} />
+                <Bar dataKey="modis" name="MODIS" fill="#60A5FA" radius={[2, 2, 0, 0]} maxBarSize={16} />
+                <Bar dataKey="viirs" name="VIIRS" fill="#FB923C" radius={[2, 2, 0, 0]} maxBarSize={16} />
+                <Bar dataKey="hdi" name="HDI" fill="#FF4500" radius={[2, 2, 0, 0]} maxBarSize={16} />
               </BarChart>
             </ResponsiveContainer>
           </div>

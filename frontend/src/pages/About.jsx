@@ -4,17 +4,17 @@ import { Satellite, Database, Info, ExternalLink, Flame, CheckCircle } from 'luc
 const DATA_SOURCES = [
   {
     name: 'NASA FIRMS',
-    url:  'https://firms.modaps.eosdis.nasa.gov/',
-    desc: 'Fire Information for Resource Management System — real-time and historical fire detection.',
+    url: 'https://firms.modaps.eosdis.nasa.gov/',
+    desc: 'Fire Information for Resource Management System - real-time and historical fire detection.',
   },
   {
     name: 'MODIS (Terra & Aqua)',
-    url:  'https://modis.gsfc.nasa.gov/',
+    url: 'https://modis.gsfc.nasa.gov/',
     desc: 'MOD14/MYD14 Active Fire products at 1 km resolution since 2000.',
   },
   {
     name: 'VIIRS (Suomi-NPP & NOAA-20)',
-    url:  'https://www.nasa.gov/viirs',
+    url: 'https://www.nasa.gov/viirs',
     desc: 'VNP14IMGT Active Fire product at 375 m resolution since 2012.',
   },
 ]
@@ -72,7 +72,7 @@ export default function About() {
       <section>
         <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
           <Satellite size={20} className="text-ember" />
-          MODIS vs VIIRS — Sensor Comparison
+          MODIS vs VIIRS - Sensor Comparison
         </h2>
         <div className="overflow-x-auto rounded-xl border border-border-muted">
           <table className="w-full text-sm">
@@ -85,14 +85,14 @@ export default function About() {
             </thead>
             <tbody className="divide-y divide-border-muted">
               {[
-                ['Full name',          'Moderate Resolution Imaging Spectroradiometer', 'Visible Infrared Imaging Radiometer Suite'],
-                ['Platforms',          'Terra (1999), Aqua (2002)',                      'Suomi-NPP (2012), NOAA-20 (2018)'],
-                ['Spatial resolution', '~1 km (1,000 m)',                               '~375 m (sub-pixel algorithm)'],
-                ['Overpass frequency', '2× daily per satellite (4× combined)',           '2× daily per satellite'],
-                ['Fire product',       'MOD14 / MYD14 Collection 6.1',                  'VNP14IMGT / VJ114IMGV2'],
-                ['FRP accuracy',       'Good for large fires',                           'Better for small and cool fires'],
-                ['Record start',       '2000-02 (Terra)',                                '2012-01 (Suomi-NPP)'],
-                ['Resolution bias',    'May miss small fires (<1 km²)',                  'Detects fires missed by MODIS'],
+                ['Full name', 'Moderate Resolution Imaging Spectroradiometer', 'Visible Infrared Imaging Radiometer Suite'],
+                ['Platforms', 'Terra (1999), Aqua (2002)', 'Suomi-NPP (2012), NOAA-20 (2018)'],
+                ['Spatial resolution', '~1 km (1,000 m)', '~375 m (sub-pixel algorithm)'],
+                ['Overpass frequency', '2× daily per satellite (4× combined)', '2× daily per satellite'],
+                ['Fire product', 'MOD14 / MYD14 Collection 6.1', 'VNP14IMGT / VJ114IMGV2'],
+                ['FRP accuracy', 'Good for large fires', 'Better for small and cool fires'],
+                ['Record start', '2000-02 (Terra)', '2012-01 (Suomi-NPP)'],
+                ['Resolution bias', 'May miss small fires (<1 km²)', 'Detects fires missed by MODIS'],
               ].map(([prop, modis, viirs]) => (
                 <tr key={prop} className="bg-bg-card hover:bg-bg-hover transition-colors">
                   <td className="px-4 py-3 text-text-muted font-medium">{prop}</td>
@@ -121,11 +121,11 @@ export default function About() {
           <p>
             This means a naive union of MODIS (2000–present) and VIIRS (2012–present) data would show
             an artificial "jump" in fire activity around 2012, when VIIRS data begins. This is
-            <strong className="text-red-400"> not a real increase</strong> in fire frequency — it's a sensor artifact.
+            <strong className="text-red-400"> not a real increase</strong> in fire frequency - it's a sensor artifact.
           </p>
           <p>
             FireTrace AI applies a cross-calibration algorithm to bring both sensors onto a common scale,
-            producing the <strong className="text-glow">Hotspot Density Index (HDI)</strong> — a consistent,
+            producing the <strong className="text-glow">Hotspot Density Index (HDI)</strong> - a consistent,
             comparable measure of burning activity from 2000 to the present.
           </p>
         </div>

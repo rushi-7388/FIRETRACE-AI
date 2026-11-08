@@ -9,6 +9,7 @@ services:
       - "8000:8000"
     environment:
       - FIRMS_API_KEY=${FIRMS_API_KEY}
+      - NASA_MAP_KEY=${NASA_MAP_KEY}
     volumes:
       - ./backend/cache:/app/cache
     restart: unless-stopped

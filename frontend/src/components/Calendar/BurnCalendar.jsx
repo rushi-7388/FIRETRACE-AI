@@ -25,12 +25,12 @@ function CalendarSkeleton() {
 
 // ─── Main BurnCalendar ────────────────────────────────────────────────────────
 export default function BurnCalendar() {
-  const svgRef      = useRef(null)
-  const tooltipRef  = useRef(null)
+  const svgRef = useRef(null)
+  const tooltipRef = useRef(null)
   const containerRef = useRef(null)
 
   const calendarData = useAppStore(s => s.calendarData)
-  const loading      = useAppStore(s => s.loading)
+  const loading = useAppStore(s => s.loading)
 
   const [dims, setDims] = useState({ width: 800, height: 400 })
 
@@ -56,10 +56,10 @@ export default function BurnCalendar() {
     const years = Array.from(new Set(calendarData.map(d => d.year))).sort((a, b) => a - b)
     const nYears = years.length
 
-    const cellW   = Math.floor((totalW - margin.left - margin.right) / MONTHS)
-    const cellH   = Math.min(22, Math.max(14, Math.floor((dims.height - margin.top - margin.bottom - 50) / nYears)))
-    const innerH  = cellH * nYears
-    const totalH  = innerH + margin.top + margin.bottom + 44  // 44 for legend
+    const cellW = Math.floor((totalW - margin.left - margin.right) / MONTHS)
+    const cellH = Math.min(22, Math.max(14, Math.floor((dims.height - margin.top - margin.bottom - 50) / nYears)))
+    const innerH = cellH * nYears
+    const totalH = innerH + margin.top + margin.bottom + 44  // 44 for legend
 
     // Max HDI for color scale
     const maxHdi = d3.max(calendarData, d => d.hdi) || 1
@@ -70,7 +70,7 @@ export default function BurnCalendar() {
 
     // Percentile scale
     const sortedHdi = calendarData.map(d => d.hdi).filter(v => v > 0).sort(d3.ascending)
-    const pctScale  = d3.scaleQuantile().domain(sortedHdi).range(d3.range(0, 1.001, 1 / 8))
+    const pctScale = d3.scaleQuantile().domain(sortedHdi).range(d3.range(0, 1.001, 1 / 8))
 
     // ── Clear & build SVG ────────────────────────────────────
     const svg = d3.select(svgRef.current)
@@ -87,10 +87,10 @@ export default function BurnCalendar() {
       .attr('font-size', 13)
       .attr('font-weight', 600)
       .attr('font-family', 'Inter, sans-serif')
-      .text('Burning Activity Calendar — Hotspot Density Index (HDI)')
+      .text('Burning Activity Calendar - Hotspot Density Index (HDI)')
 
     // ── Month header (X-axis) ────────────────────────────────
-    const monthLabels = ['J','F','M','A','M','J','J','A','S','O','N','D']
+    const monthLabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
     monthLabels.forEach((lbl, i) => {
       g.append('text')
         .attr('x', i * cellW + cellW / 2)
@@ -128,7 +128,7 @@ export default function BurnCalendar() {
           .attr('class', 'cal-cell')
           .attr('x', (m - 1) * cellW + 1)
           .attr('y', yi * cellH + 1)
-          .attr('width',  cellW - 2)
+          .attr('width', cellW - 2)
           .attr('height', cellH - 2)
           .attr('rx', 2)
           .attr('fill', color)
@@ -138,7 +138,7 @@ export default function BurnCalendar() {
 
         // Hover events
         cell
-          .on('mouseover', function(event) {
+          .on('mouseover', function (event) {
             d3.select(this)
               .attr('stroke', row?.is_anomaly ? '#00FFFF' : '#E6EDF3')
               .attr('stroke-width', 1.5)
@@ -146,33 +146,33 @@ export default function BurnCalendar() {
 
             if (!row) return
 
-            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
             tooltip
               .style('display', 'block')
               .html(`
                 <div style="font-weight:600;color:#E6EDF3;margin-bottom:6px;">
-                  🔥 ${monthNames[m-1]} ${year}
+                  🔥 ${monthNames[m - 1]} ${year}
                   ${row.is_anomaly ? '<span style="color:#00FFFF;font-size:10px;margin-left:4px;">⚡ ANOMALY</span>' : ''}
                 </div>
                 <div style="color:#7D8590;font-size:11px;line-height:1.8;">
                   <div>HDI: <span style="color:#FEB24C;font-weight:600;">${formatHDI(row.hdi)}</span></div>
                   <div>Z-Score: <span style="color:${Math.abs(row.z_score) > 2 ? '#FC4E2A' : '#A8DDB5'};font-weight:600;">${formatZScore(row.z_score)}</span></div>
-                  <div>MODIS count: <span style="color:#E6EDF3;">${row.modis_count ?? '—'}</span></div>
-                  <div>VIIRS count: <span style="color:#E6EDF3;">${row.viirs_count ?? '—'}</span></div>
-                  <div>Harmonized: <span style="color:#E6EDF3;">${row.harmonized_count ?? '—'}</span></div>
+                  <div>MODIS count: <span style="color:#E6EDF3;">${row.modis_count ?? '-'}</span></div>
+                  <div>VIIRS count: <span style="color:#E6EDF3;">${row.viirs_count ?? '-'}</span></div>
+                  <div>Harmonized: <span style="color:#E6EDF3;">${row.harmonized_count ?? '-'}</span></div>
                   <div>Hist. median: <span style="color:#E6EDF3;">${formatHDI(row.historical_median)}</span></div>
                 </div>
               `)
           })
-          .on('mousemove', function(event) {
+          .on('mousemove', function (event) {
             const svgRect = svgRef.current.getBoundingClientRect()
             const x = event.clientX - svgRect.left + 14
             const y = event.clientY - svgRect.top - 10
             tooltip
               .style('left', `${x}px`)
-              .style('top',  `${y}px`)
+              .style('top', `${y}px`)
           })
-          .on('mouseleave', function() {
+          .on('mouseleave', function () {
             d3.select(this)
               .attr('stroke', row?.is_anomaly ? '#00FFFF' : 'none')
               .attr('stroke-width', row?.is_anomaly ? 1.5 : 0)
@@ -183,10 +183,10 @@ export default function BurnCalendar() {
     })
 
     // ── Color legend bar ─────────────────────────────────────
-    const legendY   = innerH + 24
-    const legendW   = Math.min(300, totalW - margin.left - margin.right - 80)
-    const legendH   = 10
-    const legendX   = 0
+    const legendY = innerH + 24
+    const legendW = Math.min(300, totalW - margin.left - margin.right - 80)
+    const legendH = 10
+    const legendX = 0
 
     const defs = svg.append('defs')
     const gradId = 'hdiGrad'

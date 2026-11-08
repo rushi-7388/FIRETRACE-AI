@@ -27,7 +27,7 @@ function StatCard({ icon: Icon, iconColor, label, value, sub, highlight }) {
 // ─── SummaryStats ─────────────────────────────────────────────────────────────
 export default function SummaryStats() {
   const calendarData = useAppStore(s => s.calendarData)
-  const loading      = useAppStore(s => s.loading)
+  const loading = useAppStore(s => s.loading)
 
   const stats = useMemo(() => {
     if (!calendarData || calendarData.length === 0) return null
@@ -48,12 +48,12 @@ export default function SummaryStats() {
     const anomalyCount = calendarData.filter(d => d.is_anomaly).length
 
     // 5-year trend: compare last 5 years avg to prior 5 years avg
-    const years      = Array.from(new Set(calendarData.map(d => d.year))).sort((a,b) => a-b)
-    const recentYrs  = years.slice(-5)
-    const priorYrs   = years.slice(-10, -5)
-    const recentAvg  = calendarData.filter(d => recentYrs.includes(d.year)).reduce((s,d) => s + d.hdi, 0) / (recentYrs.length * 12 || 1)
-    const priorAvg   = calendarData.filter(d => priorYrs.includes(d.year)).reduce((s,d) => s + d.hdi, 0) / (priorYrs.length * 12 || 1)
-    const trendPct   = priorAvg > 0 ? ((recentAvg - priorAvg) / priorAvg) * 100 : 0
+    const years = Array.from(new Set(calendarData.map(d => d.year))).sort((a, b) => a - b)
+    const recentYrs = years.slice(-5)
+    const priorYrs = years.slice(-10, -5)
+    const recentAvg = calendarData.filter(d => recentYrs.includes(d.year)).reduce((s, d) => s + d.hdi, 0) / (recentYrs.length * 12 || 1)
+    const priorAvg = calendarData.filter(d => priorYrs.includes(d.year)).reduce((s, d) => s + d.hdi, 0) / (priorYrs.length * 12 || 1)
+    const trendPct = priorAvg > 0 ? ((recentAvg - priorAvg) / priorAvg) * 100 : 0
 
     return { totalHotspots, peak, pctVsMedian, anomalyCount, trendPct, last }
   }, [calendarData])
@@ -81,8 +81,8 @@ export default function SummaryStats() {
   const TrendIcon = trendPct > 5
     ? TrendingUp
     : trendPct < -5
-    ? TrendingDown
-    : Minus
+      ? TrendingDown
+      : Minus
 
   const trendColor = trendPct > 5 ? '#FC4E2A' : trendPct < -5 ? '#A8DDB5' : '#7D8590'
   const trendLabel = trendPct > 5 ? 'Worsening trend' : trendPct < -5 ? 'Improving trend' : 'Stable trend'
@@ -100,7 +100,7 @@ export default function SummaryStats() {
         icon={Flame}
         iconColor="#FF4500"
         label="Peak Activity"
-        value={peak ? formatDate(peak.year, peak.month) : '—'}
+        value={peak ? formatDate(peak.year, peak.month) : '-'}
         sub={peak ? `HDI ${formatHDI(peak.hdi)}` : ''}
         highlight={!!peak}
       />
@@ -108,7 +108,7 @@ export default function SummaryStats() {
         icon={Calendar}
         iconColor="#60A5FA"
         label="Latest vs Median"
-        value={pctVsMedian != null ? formatPercent(pctVsMedian) : '—'}
+        value={pctVsMedian != null ? formatPercent(pctVsMedian) : '-'}
         sub={last ? formatDate(last.year, last.month) : ''}
       />
       <StatCard

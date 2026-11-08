@@ -1,4 +1,4 @@
-# 🏆 NASA Space Apps Challenge 2026 — Surat Region
+# 🏆 NASA Space Apps Challenge 2026 - Surat Region
 ## Winning Pitch & Live Demonstration Script: FIRETRACE AI
 
 ---
@@ -21,7 +21,7 @@
 ### Part 1: The Hook (0:00 – 0:30)
 > *"Respected Judges and fellow innovators,*
 >
-> *Every year across South Gujarat—from the sugarcane fields of Bardoli to the dense forest boundaries of The Dangs—fire managers face critical decisions. For over two decades, we have relied on Earth Observation satellites like NASA’s MODIS to monitor these thermal anomalies.*
+> *Every year across South Gujarat-from the sugarcane fields of Bardoli to the dense forest boundaries of The Dangs-fire managers face critical decisions. For over two decades, we have relied on Earth Observation satellites like NASA’s MODIS to monitor these thermal anomalies.*
 >
 > *However, MODIS is nearing the end of its mission and is being replaced by VIIRS. But here lies the catastrophe for land managers: because VIIRS has a 375-meter resolution compared to MODIS’s 1-kilometer pixel, **VIIRS detects almost 4 times more hotspots for the exact same fire event**.*
 >
@@ -30,7 +30,7 @@
 ---
 
 ### Part 2: The Breakthrough: FIRETRACE AI (0:30 – 1:15)
-> *"We built **FIRETRACE AI**—the first sensor-aware satellite fire intelligence platform that mathematically harmonizes two decades of split satellite records into a single, scientifically unified time series.*
+> *"We built **FIRETRACE AI**-the first sensor-aware satellite fire intelligence platform that mathematically harmonizes two decades of split satellite records into a single, scientifically unified time series.*
 >
 > *Rather than naively merging CSV files, our engine implements three industry-standard innovations:*
 > 1. *A **10 km equal-area sinusoidal grid**, eliminating geographic distortion.*
@@ -50,7 +50,7 @@
 
 #### Step 2: Global Fire Map (`/map`)
 > *(Click on 'Fire Map' and click the 'Surat' preset button)*
-> *"Our interactive GIS Map lets responders toggle between satellites—Terra, Aqua, Suomi-NPP, NOAA-20, and NOAA-21. Users can draw custom polygon Areas of Interest (AOI) or snap directly to the Surat region. Every hotspot is categorized by Fire Radiative Power (FRP), showing fire intensity in Megawatts."*
+> *"Our interactive GIS Map lets responders toggle between satellites-Terra, Aqua, Suomi-NPP, NOAA-20, and NOAA-21. Users can draw custom polygon Areas of Interest (AOI) or snap directly to the Surat region. Every hotspot is categorized by Fire Radiative Power (FRP), showing fire intensity in Megawatts."*
 
 #### Step 3: Burning Activity Calendar (`/calendar`)
 > *(Click on 'Calendar')*
@@ -100,5 +100,5 @@
 
 ### Q4: *"Can this be used outside Surat?"*
 **Answer:**
-> *"Yes, 100%. Our platform is global. While we preloaded Surat, Ahmedabad, and Gujarat state boundaries to demonstrate local operational value to the Surat judging panel, users can draw a bounding polygon anywhere on Earth—from the Amazon basin to Australian bushland—and instantly generate a 25-year harmonized burning calendar."*
+> *"Yes, 100%. Our platform is global. While we preloaded Surat, Ahmedabad, and Gujarat state boundaries to demonstrate local operational value to the Surat judging panel, users can draw a bounding polygon anywhere on Earth-from the Amazon basin to Australian bushland-and instantly generate a 25-year harmonized burning calendar."*
 

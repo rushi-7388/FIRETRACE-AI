@@ -92,16 +92,15 @@ export default function AnomalyIntelligence() {
                       {periodLabel}
                     </td>
                     <td className="py-2">{typeof item.hdi === 'number' ? item.hdi.toFixed(2) : item.hdi}</td>
-                    <td className="py-2">{item.historical_median != null ? (typeof item.historical_median === 'number' ? item.historical_median.toFixed(2) : item.historical_median) : '—'}</td>
+                    <td className="py-2">{item.historical_median != null ? (typeof item.historical_median === 'number' ? item.historical_median.toFixed(2) : item.historical_median) : '-'}</td>
                     <td className="py-2 font-bold" style={{ color: isPositive ? '#FF4500' : '#38BDF8' }}>
                       {isPositive ? `+${z.toFixed(2)}σ` : `${z.toFixed(2)}σ`}
                     </td>
                     <td className="py-2">
-                      <span className={`px-2 py-0.5 rounded text-[10px] ${
-                        Math.abs(z) >= 3 ? 'bg-red-500/20 text-red-400 font-bold' :
-                        Math.abs(z) >= 2 ? 'bg-amber-500/20 text-amber-400' :
-                        'bg-blue-500/20 text-blue-400'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] ${Math.abs(z) >= 3 ? 'bg-red-500/20 text-red-400 font-bold' :
+                          Math.abs(z) >= 2 ? 'bg-amber-500/20 text-amber-400' :
+                            'bg-blue-500/20 text-blue-400'
+                        }`}>
                         {item.severity || (Math.abs(z) >= 3 ? 'Extreme Anomaly' : Math.abs(z) >= 2 ? 'High Anomaly' : 'Moderate')}
                       </span>
                     </td>

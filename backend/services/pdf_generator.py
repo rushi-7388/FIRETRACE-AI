@@ -82,7 +82,7 @@ def generate_executive_pdf_report(
     story = []
 
     # Title & Header
-    story.append(Paragraph("FIRETRACE AI — NASA Space Apps Challenge 2026", title_style))
+    story.append(Paragraph("FIRETRACE AI - NASA Space Apps Challenge 2026", title_style))
     story.append(Paragraph("Harmonized MODIS and VIIRS Satellite Fire Intelligence Report", subtitle_style))
     story.append(Spacer(1, 8))
     story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#FF4500'), spaceBefore=2, spaceAfter=10))

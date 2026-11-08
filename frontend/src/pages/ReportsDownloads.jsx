@@ -13,11 +13,11 @@ export default function ReportsDownloads() {
   useEffect(() => {
     axios.get('/api/provenance')
       .then(res => setProvenance(res.data))
-      .catch(() => {})
+      .catch(() => { })
 
     axios.get('/api/status')
       .then(res => setSystemStatus(res.data))
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   const triggerDownload = async (format) => {
@@ -45,7 +45,7 @@ export default function ReportsDownloads() {
       link.remove()
       toast.success(`${format.toUpperCase()} export downloaded!`, { id: toastId })
     } catch (e) {
-      toast.error('Download failed — please try again', { id: toastId })
+      toast.error('Download failed - please try again', { id: toastId })
     } finally {
       setDownloading(false)
     }

@@ -1,7 +1,7 @@
 // ─── Month names ──────────────────────────────────────────────────────────────
 const MONTH_NAMES = [
-  'January', 'February', 'March',     'April',   'May',      'June',
-  'July',    'August',   'September', 'October', 'November', 'December',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
 const MONTH_ABBREVS = [
@@ -10,7 +10,7 @@ const MONTH_ABBREVS = [
 ]
 
 const MONTH_SINGLE = [
-  'J','F','M','A','M','J','J','A','S','O','N','D',
+  'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D',
 ]
 
 // ─── formatDate ───────────────────────────────────────────────────────────────
@@ -37,7 +37,7 @@ export function formatDateISO(year, month) {
  * Returns HDI formatted to one decimal place.
  */
 export function formatHDI(value) {
-  if (value == null || isNaN(value)) return '—'
+  if (value == null || isNaN(value)) return '-'
   return value.toFixed(1)
 }
 
@@ -46,7 +46,7 @@ export function formatHDI(value) {
  * Returns z-score with sign and σ symbol, e.g. "+2.3σ".
  */
 export function formatZScore(z) {
-  if (z == null || isNaN(z)) return '—'
+  if (z == null || isNaN(z)) return '-'
   const sign = z >= 0 ? '+' : ''
   return `${sign}${z.toFixed(2)}σ`
 }
@@ -71,13 +71,13 @@ export function monthSingle(num) {
 
 // ─── formatNumber ─────────────────────────────────────────────────────────────
 export function formatNumber(n) {
-  if (n == null || isNaN(n)) return '—'
+  if (n == null || isNaN(n)) return '-'
   return n.toLocaleString('en-IN')
 }
 
 // ─── formatPercent ────────────────────────────────────────────────────────────
 export function formatPercent(n) {
-  if (n == null || isNaN(n)) return '—'
+  if (n == null || isNaN(n)) return '-'
   const sign = n >= 0 ? '+' : ''
   return `${sign}${n.toFixed(1)}%`
 }
