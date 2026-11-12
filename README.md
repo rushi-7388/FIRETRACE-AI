@@ -53,18 +53,19 @@ When NASA's VIIRS (375 m pixel) became operational alongside MODIS (1000 m pixel
 
 ---
 
-## 🖥️ 8 Complete Application Pages
+## 🖥️ 9 Complete Application Environments
 
 | # | Page | Route | Description |
 |---|---|---|---|
-| **01** | **Executive Dashboard** | `/` | Real-time incident command center, active fire metrics, and Surat fire status. |
-| **02** | **Global Fire Map** | `/map` | Interactive Leaflet GIS map with multi-satellite filters (**Terra, Aqua, S-NPP, NOAA-20, NOAA-21**), AOI polygon drawing, and Fire Radiative Power (FRP) intensity markers. |
-| **03** | **Burning Activity Calendar** | `/calendar` | **25-Year Heatmap Calendar (2000–Present)**, 25-year monthly medians baseline table, and **Observation Inspector Modal** to inspect underlying NASA telemetry on click. |
-| **04** | **MODIS vs. VIIRS Comparison** | `/compare` | Side-by-side sensor bias visualizer with 2012–2022 overlap ratio analysis. |
-| **05** | **Regional Analytics** | `/analytics` | **Surat & South Gujarat deep-dive**: Decadal activity (2000s vs 2010s vs 2020s), post-harvest sugarcane clearing cycles, and The Dangs forest fringe dynamics. |
-| **06** | **Anomaly Intelligence** | `/anomalies` | **Explainable Anomaly Engine**: Top ranked historical fire anomalies with severity classes, driver explanations, and official NASA scientific disclaimers. |
-| **07** | **Reports & Downloads** | `/reports` | Multi-format exports (**CSV**, **Spatial GeoJSON**, **Structured JSON**, and **PDF Executive Summary**) with complete data provenance citations. |
-| **08** | **Scientific Methodology** | `/methodology` | Mathematical equations, 2012–2022 calibration table, and peer-reviewed citations. |
+| **01** | **Executive Dashboard** | `/` | Command center with 40/60 map-to-calendar layout, 4 core metrics, and summary charts. |
+| **02** | **Smart AOI Map** | `/map` | Interactive GIS map with multi-satellite filters (**Terra, Aqua, S-NPP, NOAA-20, NOAA-21**), AOI drawing, timeline playback, and FRP intensity markers. |
+| **03** | **Season Calendar** | `/calendar` | **12-Month × 25-Year Historical Burning Activity Calendar (2000–Present)** with missing vs zero fire distinction and daily drilldown. |
+| **04** | **Overlap Lab** | `/compare` | Side-by-side sensor bias visualizer with 2012–2022 overlap ratio analysis and empirical scaling coefficients. |
+| **05** | **Regional & FRP** | `/analytics` | **Surat & Regional deep-dive**: Decadal activity (2000s vs 2010s vs 2020s), sensor-stratified FRP distributions, and diurnal day/night dynamics. |
+| **06** | **Anomaly Engine** | `/anomalies` | **Explainable Anomaly Engine**: Top ranked historical fire anomalies with severity classes, baseline selectors, driver explanations, and official non-dispatch warnings. |
+| **07** | **AI Studio** | `/ai-intel` | **Advanced AI/ML**: Haversine DBSCAN fire clustering, Mann-Kendall regime change test, experimental forecasting, Global Burning Fingerprint, and deterministic NL assistant. |
+| **08** | **Reports & Quality** | `/reports` | Multi-format exports (**CSV**, **Spatial GeoJSON**, **Structured JSON**, and **PDF Executive Report**) with complete data provenance citations. |
+| **09** | **Scientific Methodology** | `/methodology` | Mathematical equations, 10 km sinusoidal equal-area grid formulation, 2012–2022 calibration table, and peer-reviewed citations. |
 
 ---
 
@@ -110,27 +111,49 @@ docker-compose up --build
 
 ---
 
-## 🧪 Scientific Validation Tests
+## 🧪 Comprehensive Automated Test Suite (22/22 Passing)
 
-Run unit tests verifying grid projection, confidence normalization, and harmonization math:
+Run unit, integration, and scientific validation tests:
 
 ```powershell
-cd backend
-python -m pytest -v
+pytest
 ```
 
 Output:
 ```
-tests/test_harmonizer.py::test_sinusoidal_grid_projection PASSED         [ 25%]
-tests/test_harmonizer.py::test_confidence_normalization PASSED           [ 50%]
-tests/test_harmonizer.py::test_collocated_duplicate_detection PASSED     [ 75%]
-tests/test_harmonizer.py::test_harmonize_observations_pipeline PASSED    [100%]
-============================== 4 passed in 7.65s ==============================
+backend/tests/test_api_endpoints.py ....                                 [ 18%]
+backend/tests/test_harmonizer.py ....                                    [ 36%]
+backend/tests/test_integration_pipeline.py .....                         [ 59%]
+backend/tests/test_ml_engine.py .....                                    [ 81%]
+backend/tests/test_scientific_validation.py ....                         [100%]
+======================= 22 passed in 24.55s =======================
 ```
 
 ---
 
+## 📚 Complete Technical Documentation
+
+| Document | Description |
+|---|---|
+| [`docs/PROJECT_AUDIT.md`](docs/PROJECT_AUDIT.md) | Full architectural and feature audit of all components |
+| [`docs/REQUIREMENTS_TRACEABILITY.md`](docs/REQUIREMENTS_TRACEABILITY.md) | Traceability matrix mapping requirements to source files and tests |
+| [`docs/IMPLEMENTATION_ROADMAP.md`](docs/IMPLEMENTATION_ROADMAP.md) | Development sequence, milestones, and phase-by-phase execution progress |
+| [`docs/SYSTEM_ARCHITECTURE.md`](docs/SYSTEM_ARCHITECTURE.md) | Dual-stack full architecture, data flow, and component diagrams |
+| [`docs/DATABASE_SCHEMA.md`](docs/DATABASE_SCHEMA.md) | PostgreSQL/PostGIS DDL and SQLite relational schema specification |
+| [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md) | Canonical satellite attributes, units, definitions, and 4 core metrics |
+| [`docs/SCIENTIFIC_HARMONIZATION.md`](docs/SCIENTIFIC_HARMONIZATION.md) | Full mathematical formulations, sinusoidal projection, and $\alpha(m)$ calibration |
+| [`docs/AI_ML_METHODOLOGY.md`](docs/AI_ML_METHODOLOGY.md) | DBSCAN clustering, Mann-Kendall trend, seasonal forecasting, and deterministic assistant |
+| [`docs/INNOVATION_FEATURES.md`](docs/INNOVATION_FEATURES.md) | Six core scientific innovations differentiating the platform |
+| [`docs/TESTING_STRATEGY.md`](docs/TESTING_STRATEGY.md) | Testing methodology, synthetic datasets, and regression guardrails |
+| [`docs/TEST_RESULTS.md`](docs/TEST_RESULTS.md) | Complete test execution results, pass rates, and performance benchmarks |
+| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | End-to-end user manual and operational walkthroughs |
+| [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md) | Docker, cloud, and local dual-stack deployment instructions |
+| [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md) | Known constraints, satellite orbital physics, and transparent limitations |
+
+---
+
 ## 👥 NASA Space Apps Challenge 2026 Team
-- **Region:** Surat, Gujarat, India  
+- **Team Name:** Astro-Avengers
+- **Region Focus:** Surat, Gujarat, India  
 - **Lead Developer & Geospatial Data Engineer:** [@rushi-7388](https://github.com/rushi-7388)  
-- **Hackathon Entry:** [MODIS and VIIRS Hot Spots Harmonization](https://www.spaceappschallenge.org/2026/challenges/modis-and-viirs-hot-spots/)
+- **Hackathon Challenge:** [Harmonization of MODIS and VIIRS Active Fire Hotspots](https://www.spaceappschallenge.org/2026/challenges/modis-and-viirs-hot-spots/)

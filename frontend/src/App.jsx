@@ -8,8 +8,10 @@ import RegionalAnalytics from './pages/RegionalAnalytics.jsx'
 import AnomalyIntelligence from './pages/AnomalyIntelligence.jsx'
 import ReportsDownloads from './pages/ReportsDownloads.jsx'
 import ScientificMethodology from './pages/ScientificMethodology.jsx'
+import AIIntelligence from './pages/AIIntelligence.jsx'
+import Logo from './components/Brand/Logo.jsx'
 import {
-  Flame, Globe, Calendar, BarChart2, MapPin, Zap, Download, BookOpen, Satellite
+  Flame, Globe, Calendar, BarChart2, MapPin, Zap, Download, BookOpen, Satellite, BrainCircuit
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -20,6 +22,7 @@ const NAV_LINKS = [
   { to: '/compare',     label: 'Overlap Lab',      icon: BarChart2 },
   { to: '/analytics',   label: 'Regional & FRP',   icon: MapPin },
   { to: '/anomalies',   label: 'Anomaly Engine',   icon: Zap },
+  { to: '/ai-intel',    label: 'AI Studio',        icon: BrainCircuit },
   { to: '/reports',     label: 'Reports & Quality',icon: Download },
   { to: '/methodology', label: 'Methodology',      icon: BookOpen },
 ]
@@ -31,15 +34,12 @@ function Navbar() {
     <header className="sticky top-0 z-50 border-b border-border-muted bg-bg-primary/95 backdrop-blur-md">
       <div className="max-w-screen-2xl mx-auto px-3 h-14 flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center gap-2.5">
-          <span className="text-2xl animate-flame-pulse">🔥</span>
+        <NavLink to="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+          <Logo size={32} />
           <div className="flex items-center gap-2">
             <span className="font-bold text-base tracking-tight text-text-primary">FIRETRACE AI</span>
-            <span className="text-[10px] text-ember font-mono border border-ember/30 bg-ember/10 rounded px-1.5 py-0.5 font-bold">
-              SURAT 2026
-            </span>
           </div>
-        </div>
+        </NavLink>
 
         {/* 8 Navigation Links */}
         <nav className="flex items-center gap-1 overflow-x-auto py-1">
@@ -85,6 +85,7 @@ export default function App() {
           <Route path="/compare"     element={<Compare />} />
           <Route path="/analytics"   element={<RegionalAnalytics />} />
           <Route path="/anomalies"   element={<AnomalyIntelligence />} />
+          <Route path="/ai-intel"    element={<AIIntelligence />} />
           <Route path="/reports"     element={<ReportsDownloads />} />
           <Route path="/methodology" element={<ScientificMethodology />} />
         </Routes>

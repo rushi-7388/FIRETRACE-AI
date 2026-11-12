@@ -120,9 +120,16 @@ export default function BurnCalendar() {
     years.forEach((year, yi) => {
       for (let m = 1; m <= MONTHS; m++) {
         const row = lookup[`${year}-${m}`]
+        const hasData = !!row
         const hdi = row?.hdi ?? 0
         const pct = hdi > 0 ? (pctScale(hdi) ?? 0) : 0
-        const color = hdi > 0 ? hdiToColorPercentile(pct) : '#1A1F26'
+        // Distinguish: (1) Active Fire (>0), (2) Zero Fires Observed (valid pass = 0), (3) No Satellite Coverage (pre-launch)
+        const isPreLaunch = year < 2000 || (year === 2000 && m < 3)
+        const color = !hasData || isPreLaunch
+          ? '#0D1117'
+          : hdi > 0
+            ? hdiToColorPercentile(pct)
+            : '#181E27'
 
         const cell = g.append('rect')
           .attr('class', 'cal-cell')
@@ -132,8 +139,9 @@ export default function BurnCalendar() {
           .attr('height', cellH - 2)
           .attr('rx', 2)
           .attr('fill', color)
-          .attr('stroke', row?.is_anomaly ? '#00FFFF' : 'none')
-          .attr('stroke-width', row?.is_anomaly ? 1.5 : 0)
+          .attr('stroke', row?.is_anomaly ? '#00FFFF' : (isPreLaunch ? '#21262D' : 'none'))
+          .attr('stroke-width', row?.is_anomaly ? 1.5 : (isPreLaunch ? 0.8 : 0))
+          .attr('stroke-dasharray', isPreLaunch ? '2,2' : 'none')
           .style('cursor', 'pointer')
 
         // Hover events
@@ -144,23 +152,28 @@ export default function BurnCalendar() {
               .attr('stroke-width', 1.5)
               .attr('opacity', 0.85)
 
-            if (!row) return
-
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
             tooltip
               .style('display', 'block')
               .html(`
                 <div style="font-weight:600;color:#E6EDF3;margin-bottom:6px;">
                   🔥 ${monthNames[m - 1]} ${year}
-                  ${row.is_anomaly ? '<span style="color:#00FFFF;font-size:10px;margin-left:4px;">⚡ ANOMALY</span>' : ''}
+                  ${row?.is_anomaly ? '<span style="color:#00FFFF;font-size:10px;margin-left:4px;">⚡ ANOMALY</span>' : ''}
                 </div>
                 <div style="color:#7D8590;font-size:11px;line-height:1.8;">
-                  <div>HDI: <span style="color:#FEB24C;font-weight:600;">${formatHDI(row.hdi)}</span></div>
-                  <div>Z-Score: <span style="color:${Math.abs(row.z_score) > 2 ? '#FC4E2A' : '#A8DDB5'};font-weight:600;">${formatZScore(row.z_score)}</span></div>
-                  <div>MODIS count: <span style="color:#E6EDF3;">${row.modis_count ?? '-'}</span></div>
-                  <div>VIIRS count: <span style="color:#E6EDF3;">${row.viirs_count ?? '-'}</span></div>
-                  <div>Harmonized: <span style="color:#E6EDF3;">${row.harmonized_count ?? '-'}</span></div>
-                  <div>Hist. median: <span style="color:#E6EDF3;">${formatHDI(row.historical_median)}</span></div>
+                  ${isPreLaunch ? `
+                    <div style="color:#8B949E;font-style:italic;">No Satellite Operational (Pre-MODIS Launch)</div>
+                  ` : row ? `
+                    <div>HDI: <span style="color:#FEB24C;font-weight:600;">${formatHDI(row.hdi)}</span></div>
+                    <div>Z-Score: <span style="color:${Math.abs(row.z_score) > 2 ? '#FC4E2A' : '#A8DDB5'};font-weight:600;">${formatZScore(row.z_score)}</span></div>
+                    <div>MODIS count: <span style="color:#E6EDF3;">${row.modis_count ?? 0}</span></div>
+                    <div>VIIRS count: <span style="color:#E6EDF3;">${row.viirs_count ?? 0}</span></div>
+                    <div>Harmonized: <span style="color:#E6EDF3;">${row.harmonized_count ?? 0}</span></div>
+                    <div>Hist. median: <span style="color:#E6EDF3;">${formatHDI(row.historical_median)}</span></div>
+                    <div>Observation QC: <span style="color:#3FB950;">${hdi === 0 ? 'Verified Zero Burning' : 'Active Detections'}</span></div>
+                  ` : `
+                    <div style="color:#8B949E;">No observation recorded for period</div>
+                  `}
                 </div>
               `)
           })
@@ -238,11 +251,29 @@ export default function BurnCalendar() {
       .attr('font-size', 10)
       .text('High HDI')
 
-    // Anomaly legend
+    // Zero-fire & Anomaly legend
+    const legOffset = legendX + 60 + legendW + 20
     g.append('rect')
-      .attr('x', legendX + 60 + legendW + 24)
+      .attr('x', legOffset)
       .attr('y', legendY)
-      .attr('width', 14)
+      .attr('width', 12)
+      .attr('height', legendH)
+      .attr('rx', 2)
+      .attr('fill', '#181E27')
+      .attr('stroke', '#30363D')
+      .attr('stroke-width', 0.8)
+
+    g.append('text')
+      .attr('x', legOffset + 16)
+      .attr('y', legendY + legendH - 1)
+      .attr('fill', '#7D8590')
+      .attr('font-size', 10)
+      .text('0 Fire (QC OK)')
+
+    g.append('rect')
+      .attr('x', legOffset + 100)
+      .attr('y', legendY)
+      .attr('width', 12)
       .attr('height', legendH)
       .attr('rx', 2)
       .attr('fill', '#FC4E2A')
@@ -250,7 +281,7 @@ export default function BurnCalendar() {
       .attr('stroke-width', 1.5)
 
     g.append('text')
-      .attr('x', legendX + 60 + legendW + 42)
+      .attr('x', legOffset + 116)
       .attr('y', legendY + legendH - 1)
       .attr('fill', '#7D8590')
       .attr('font-size', 10)

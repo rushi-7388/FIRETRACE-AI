@@ -81,10 +81,16 @@ CANONICAL_COLS = [
     "confidence_raw",
     "confidence_norm",
     "brightness",
+    "brightness_temp",
     "satellite",
     "sensor",
     "processing_type",
     "source_product",
+    "daynight",
+    "scan",
+    "track",
+    "version",
+    "ingestion_timestamp",
     "is_collocated",
 ]
 
@@ -108,11 +114,17 @@ def _cache_key(*parts: str) -> str:
     return hashlib.md5(raw.encode()).hexdigest()
 
 
+_MEM_CACHE: Dict[str, pd.DataFrame] = {}
+
+
 def _load_cache(key: str) -> Optional[pd.DataFrame]:
+    if key in _MEM_CACHE:
+        return _MEM_CACHE[key].copy()
     p = _cache_path(key)
     if p.exists():
         try:
             df = pd.read_json(p, orient="records")
+            _MEM_CACHE[key] = df.copy()
             return df
         except Exception as exc:
             logger.warning("Cache read failed for %s: %s", p, exc)
@@ -120,6 +132,7 @@ def _load_cache(key: str) -> Optional[pd.DataFrame]:
 
 
 def _save_cache(key: str, df: pd.DataFrame) -> None:
+    _MEM_CACHE[key] = df.copy()
     p = _cache_path(key)
     try:
         p.write_text(df.to_json(orient="records", date_format="iso"), encoding="utf-8")
@@ -298,10 +311,16 @@ def generate_synthetic_hotspots(
                 "confidence_raw": str(conf_raw),
                 "confidence_norm": conf_norm,
                 "brightness": round(brightness, 2),
+                "brightness_temp": round(brightness - 12.0, 2),
                 "satellite": satellite,
                 "sensor": sensor,
                 "processing_type": "SP" if current < (date.today() - timedelta(days=90)) else "NRT",
                 "source_product": f"NASA_{sensor}_{satellite}",
+                "daynight": "D" if acq_hour in (10, 13) else "N",
+                "scan": 1.0 if "MODIS" in sensor else 0.375,
+                "track": 1.0 if "MODIS" in sensor else 0.375,
+                "version": "6.1" if "MODIS" in sensor else "2.0",
+                "ingestion_timestamp": datetime.utcnow().isoformat() + "Z",
                 "is_collocated": False,
             })
         current += timedelta(days=1)
@@ -417,6 +436,17 @@ async def fetch_satellite_data(
                             csv_df["brightness"] = csv_df["bright_ti4"]
                         elif "brightness" not in csv_df.columns:
                             csv_df["brightness"] = 330.0
+                        if "bright_ti5" in csv_df.columns:
+                            csv_df["brightness_temp"] = csv_df["bright_ti5"]
+                        elif "bright_t31" in csv_df.columns:
+                            csv_df["brightness_temp"] = csv_df["bright_t31"]
+                        else:
+                            csv_df["brightness_temp"] = csv_df["brightness"] - 12.0
+                        csv_df["daynight"] = csv_df["daynight"].astype(str) if "daynight" in csv_df.columns else "D"
+                        csv_df["scan"] = pd.to_numeric(csv_df.get("scan", 1.0 if sensor == "MODIS" else 0.375), errors="coerce").fillna(1.0 if sensor == "MODIS" else 0.375)
+                        csv_df["track"] = pd.to_numeric(csv_df.get("track", 1.0 if sensor == "MODIS" else 0.375), errors="coerce").fillna(1.0 if sensor == "MODIS" else 0.375)
+                        csv_df["version"] = csv_df["version"].astype(str) if "version" in csv_df.columns else ("6.1" if sensor == "MODIS" else "2.0")
+                        csv_df["ingestion_timestamp"] = datetime.utcnow().isoformat() + "Z"
                         frames.append(csv_df)
                 except Exception as exc:
                     logger.warning("NASA FIRMS fetch failed for %s (%s): %s", sat, url, exc)

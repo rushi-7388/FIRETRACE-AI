@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import useAppStore from '../../store/useAppStore.js'
 import {
-  Search, MapPin, Loader2, ChevronDown, Settings,
+  Search, MapPin, Loader2, ChevronDown, Settings, Globe, Compass, Flame,
 } from 'lucide-react'
 import clsx from 'clsx'
 import toast from 'react-hot-toast'
 import ExportButton from '../Export/ExportButton.jsx'
+import { GLOBAL_LOCATIONS_CATALOG } from '../Map/GlobalLocationSearch.jsx'
 
 // ─── Year / Month options ─────────────────────────────────────────────────────
 const YEARS  = Array.from({ length: 25 }, (_, i) => 2000 + i)
@@ -14,15 +15,6 @@ const MONTHS = [
   { v: '04', l: 'Apr' }, { v: '05', l: 'May' }, { v: '06', l: 'Jun' },
   { v: '07', l: 'Jul' }, { v: '08', l: 'Aug' }, { v: '09', l: 'Sep' },
   { v: '10', l: 'Oct' }, { v: '11', l: 'Nov' }, { v: '12', l: 'Dec' },
-]
-
-// ─── Region presets ───────────────────────────────────────────────────────────
-const REGION_PRESETS = [
-  { key: 'surat',      label: '📍 Surat',      bbox: [72.6, 21.0, 73.2, 21.4] },
-  { key: 'ahmedabad',  label: '📍 Ahmedabad',  bbox: [72.4, 22.9, 73.0, 23.3] },
-  { key: 'mumbai',     label: '📍 Mumbai',      bbox: [72.7, 18.8, 73.1, 19.3] },
-  { key: 'amazon',     label: '🌿 Amazon',      bbox: [-62, -10, -50, -2]      },
-  { key: 'australia',  label: '🦘 Australia',   bbox: [135, -38, 155, -25]     },
 ]
 
 // ─── Sensor options ───────────────────────────────────────────────────────────
@@ -34,8 +26,11 @@ const SENSOR_OPTIONS = [
 
 // ─── ControlPanel ─────────────────────────────────────────────────────────────
 export default function ControlPanel() {
-  const { bbox, dateRange, sensor, loading, setBbox, setDateRange, setSensor, fetchHarmonized, fetchHotspots } =
-    useAppStore()
+  const {
+    bbox, dateRange, sensor, loading,
+    setBbox, setDateRange, setSensor,
+    fetchHarmonized, fetchHotspots, setBboxAndRefetch,
+  } = useAppStore()
 
   const [bboxInput, setBboxInput] = useState({
     minLon: bbox[0].toString(),
@@ -74,6 +69,12 @@ export default function ControlPanel() {
     toast.success('Bbox updated')
   }
 
+  const [selectedContinent, setSelectedContinent] = useState('Asia')
+
+  const displayedLocations = useMemo(() => {
+    return GLOBAL_LOCATIONS_CATALOG.filter(l => l.region === selectedContinent || selectedContinent === 'All')
+  }, [selectedContinent])
+
   const handlePreset = (preset) => {
     setBbox(preset.bbox)
     setBboxInput({
@@ -82,7 +83,8 @@ export default function ControlPanel() {
       maxLon: preset.bbox[2].toString(),
       maxLat: preset.bbox[3].toString(),
     })
-    toast.success(`Region set to ${preset.label.replace(/^.+\s/, '')}`)
+    setBboxAndRefetch(preset.bbox, null, preset.name)
+    toast.success(`Active AOI set to ${preset.name}`)
   }
 
   const handleAnalyze = async () => {
@@ -99,18 +101,50 @@ export default function ControlPanel() {
         <span className="text-sm font-semibold text-text-primary">Analysis Controls</span>
       </div>
 
-      {/* ── Region Presets ────────────────────────────────────────── */}
+      {/* ── Global Biome Presets ──────────────────────────────────── */}
       <section>
-        <p className="label-muted mb-2">Quick Regions</p>
-        <div className="grid grid-cols-1 gap-1">
-          {REGION_PRESETS.map(p => (
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="label-muted flex items-center gap-1">
+            <Globe size={11} className="text-ember" />
+            Global Fire Biomes
+          </p>
+          <span className="text-[10px] text-text-muted font-mono">{displayedLocations.length} active</span>
+        </div>
+
+        {/* Continent Filter Chips */}
+        <div className="flex gap-1 overflow-x-auto pb-1.5 mb-1.5 scrollbar-none">
+          {['Asia', 'North America', 'South America', 'Europe', 'Oceania', 'Africa'].map(c => (
             <button
-              key={p.key}
+              key={c}
+              onClick={() => setSelectedContinent(c)}
+              className={clsx(
+                'px-2 py-0.5 rounded text-[10px] whitespace-nowrap transition-colors border',
+                selectedContinent === c
+                  ? 'bg-ember text-white border-ember font-semibold'
+                  : 'bg-bg-secondary text-text-muted hover:text-text-primary border-border-muted'
+              )}
+            >
+              {c.replace('North ', 'N. ').replace('South ', 'S. ')}
+            </button>
+          ))}
+        </div>
+
+        {/* Location buttons */}
+        <div className="grid grid-cols-1 gap-1 max-h-44 overflow-y-auto border border-border-muted rounded-lg p-1 bg-bg-secondary/40">
+          {displayedLocations.map(p => (
+            <button
+              key={p.name}
               onClick={() => handlePreset(p)}
               className="text-left text-xs text-text-muted hover:text-text-primary hover:bg-bg-hover
-                         px-2.5 py-1.5 rounded-md transition-colors border border-transparent hover:border-border-muted"
+                         px-2 py-1.5 rounded-md transition-colors border border-transparent hover:border-border-muted flex items-center justify-between group"
             >
-              {p.label}
+              <div className="truncate pr-1">
+                <span className="text-text-primary font-medium group-hover:text-ember">{p.name}</span>
+                <span className="text-[10px] text-text-muted block">{p.country}</span>
+              </div>
+              <span className="text-[9px] font-mono text-text-muted bg-bg-card px-1 rounded flex-shrink-0">
+                {p.category.split(' ')[0]}
+              </span>
             </button>
           ))}
         </div>

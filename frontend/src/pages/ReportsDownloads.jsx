@@ -20,9 +20,9 @@ export default function ReportsDownloads() {
       .catch(() => { })
   }, [])
 
-  const triggerDownload = async (format) => {
+  const triggerDownload = async (format, dataType = 'all') => {
     setDownloading(true)
-    const toastId = toast.loading(`Generating NASA ${format.toUpperCase()} export...`)
+    const toastId = toast.loading(`Generating NASA ${format.toUpperCase()} (${dataType}) export...`)
     try {
       const response = await axios.post(
         '/api/export/data',
@@ -31,6 +31,7 @@ export default function ReportsDownloads() {
           start_date: dateRange.start,
           end_date: dateRange.end,
           format,
+          data_type: dataType,
         },
         { responseType: 'blob' }
       )
@@ -39,7 +40,7 @@ export default function ReportsDownloads() {
       const link = document.createElement('a')
       link.href = url
       const ext = format === 'pdf_summary' ? 'pdf' : format
-      link.setAttribute('download', `firetrace_${format}_export.${ext}`)
+      link.setAttribute('download', `firetrace_${dataType}_${format}.${ext}`)
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -103,17 +104,36 @@ export default function ReportsDownloads() {
         <div className="bg-bg-card border border-border-muted rounded-xl p-4 flex flex-col justify-between">
           <div>
             <FileSpreadsheet size={24} className="text-ember mb-2" />
-            <h3 className="text-sm font-semibold text-text-primary">Observation CSV</h3>
+            <h3 className="text-sm font-semibold text-text-primary">Observation & Harmonized CSV</h3>
             <p className="text-xs text-text-muted mt-1">
-              Standard comma-separated format compatible with Excel, QGIS, and ArcGIS. Includes coordinates, FRP, confidence, and satellite tags.
+              Comma-separated tables for Excel, R, Pandas, and GIS. Select specific dataset slices:
             </p>
+            <div className="grid grid-cols-2 gap-1.5 mt-2.5">
+              {[
+                { id: 'all', label: 'All Raw Spots' },
+                { id: 'harmonized_monthly', label: 'Monthly HDI' },
+                { id: 'daily', label: 'Daily Series' },
+                { id: 'anomalies', label: 'Anomalies' },
+                { id: 'matched', label: 'Collocated' },
+                { id: 'raw_modis', label: 'MODIS Only' },
+              ].map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => triggerDownload('csv', opt.id)}
+                  disabled={downloading}
+                  className="text-[10px] py-1 px-1.5 bg-bg-secondary hover:border-ember border border-border-muted rounded text-text-muted hover:text-text-primary transition-colors text-center"
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
           <button
-            onClick={() => triggerDownload('csv')}
+            onClick={() => triggerDownload('csv', 'all')}
             disabled={downloading}
             className="mt-4 w-full py-2 bg-bg-secondary hover:border-ember border border-border-muted rounded-lg text-xs font-medium text-text-primary flex items-center justify-center gap-1.5 transition-colors"
           >
-            <Download size={14} /> Download CSV
+            <Download size={14} /> Full Dataset CSV
           </button>
         </div>
 

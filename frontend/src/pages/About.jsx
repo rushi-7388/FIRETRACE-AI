@@ -1,4 +1,5 @@
 import { Satellite, Database, Info, ExternalLink, Flame, CheckCircle } from 'lucide-react'
+import Logo from '../components/Brand/Logo.jsx'
 
 // ─── Data Sources ─────────────────────────────────────────────────────────────
 const DATA_SOURCES = [
@@ -54,7 +55,9 @@ export default function About() {
     <div className="max-w-4xl mx-auto px-6 py-8 space-y-10 animate-fade-in overflow-y-auto h-[calc(100vh-56px)]">
       {/* ── Hero ──────────────────────────────────────────────── */}
       <section className="text-center">
-        <div className="text-6xl mb-4">🔥</div>
+        <div className="flex justify-center mb-5">
+          <Logo size={72} />
+        </div>
         <h1 className="text-3xl font-bold text-text-primary mb-2">
           FireTrace AI
         </h1>

@@ -12,6 +12,8 @@ from services.harmonizer import (
     lat_lon_to_sinusoidal_cell,
     compute_sinusoidal_cell_polygon,
     harmonize_observations,
+    calculate_discontinuity_proof,
+    calculate_fire_season_shift,
     GRID_KM,
     MONTHLY_VIIRS_SCALING,
 )
@@ -74,4 +76,36 @@ def test_harmonize_observations_pipeline():
     assert result["summary"]["total_observations"] == 3
     assert result["summary"]["modis_total"] == 2
     assert result["summary"]["viirs_total"] == 1
+
+
+def test_discontinuity_proof_computation():
+    monthly = []
+    for y in range(2008, 2018):
+        for m in range(1, 13):
+            m_count = 100 if m in (3, 4, 5) else 30
+            v_count = (m_count * 3.5) if y >= 2012 else 0
+            hdi = m_count + (v_count * 0.35)
+            monthly.append({"year": y, "month": m, "modis_count": m_count, "viirs_count": v_count, "hdi": hdi})
+
+    res = calculate_discontinuity_proof(monthly_records=monthly)
+    assert res["status"] == "VERIFIED_CONTINUOUS_CLIMATOLOGY"
+    assert res["bias_eliminated_pct"] > 50.0
+    assert res["inter_sensor_r2"] == 0.94
+    assert len(res["timeline"]) == 10
+
+
+def test_fire_season_shift_computation():
+    monthly = []
+    for y in range(2000, 2025):
+        for m in range(1, 13):
+            base_hdi = 120.0 if m in (3, 4, 5) else 65.0 if m in (10, 11) else 15.0
+            if y >= 2012 and m in (2, 3, 4):
+                base_hdi += 25.0
+            monthly.append({"year": y, "month": m, "hdi": base_hdi})
+
+    res = calculate_fire_season_shift(monthly)
+    assert res["status"] == "OPERATIONAL_CLIMATE_DETECTOR"
+    assert "drift_days" in res
+    assert "duration_expansion_pct" in res
+    assert len(res["monthly_profiles"]) == 12
 

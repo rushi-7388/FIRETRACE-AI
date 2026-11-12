@@ -7,7 +7,14 @@ __pycache__/
 env/
 venv/
 .env
+.pytest_cache/
+backend/.pytest_cache/
 backend/cache/
+cache/
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
 
 # Node
 node_modules/

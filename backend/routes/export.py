@@ -35,6 +35,7 @@ class ExportRequest(BaseModel):
     end_date: str = Field(...)
     satellites: Optional[List[str]] = Field(default=None)
     format: str = Field(default="csv", description="csv, geojson, json, or pdf_summary")
+    data_type: Optional[str] = Field(default="all", description="all, raw_modis, raw_viirs, harmonized_monthly, daily, matched, or anomalies")
 
 
 def _parse_bbox(bbox_str: str) -> tuple[float, float, float, float]:
@@ -55,15 +56,34 @@ async def export_data(req: ExportRequest):
 
     raw_df = await fetch_satellite_data(min_lat, min_lon, max_lat, max_lon, sd, ed, req.satellites)
 
+    # Filter or aggregate based on requested data_type
+    export_df = raw_df
+    dtype = (req.data_type or "all").lower()
+
+    if dtype == "raw_modis":
+        export_df = raw_df[raw_df["sensor"].str.upper().str.contains("MODIS")]
+    elif dtype == "raw_viirs":
+        export_df = raw_df[raw_df["sensor"].str.upper().str.contains("VIIRS")]
+    elif dtype == "matched":
+        export_df = raw_df[raw_df.get("is_collocated", False) == True]
+    elif dtype in ("harmonized_monthly", "daily", "anomalies"):
+        harm = harmonize_observations(raw_df)
+        if dtype == "harmonized_monthly":
+            export_df = pd.DataFrame(harm["monthly"])
+        elif dtype == "daily":
+            export_df = pd.DataFrame(harm["daily"])
+        elif dtype == "anomalies":
+            export_df = pd.DataFrame([r for r in harm["monthly"] if r.get("is_anomaly")])
+
     # 1. CSV Format
     if req.format.lower() == "csv":
         buf = io.StringIO()
-        raw_df.to_csv(buf, index=False)
+        export_df.to_csv(buf, index=False)
         buf.seek(0)
         return StreamingResponse(
             buf,
             media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=firetrace_nasa_hotspots_{sd}_{ed}.csv"},
+            headers={"Content-Disposition": f"attachment; filename=firetrace_{dtype}_{sd}_{ed}.csv"},
         )
 
     # 2. GeoJSON Format

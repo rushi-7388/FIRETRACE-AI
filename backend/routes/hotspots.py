@@ -62,7 +62,11 @@ def _parse_bbox(bbox: Optional[str]) -> tuple[float, float, float, float]:
 def _df_to_geojson(df: pd.DataFrame) -> dict:
     """Convert a hotspot DataFrame to a GeoJSON FeatureCollection."""
     features = []
-    required_props = ["acq_date", "acq_time", "frp", "confidence", "brightness", "sensor"]
+    required_props = [
+        "acq_date", "acq_time", "frp", "confidence", "confidence_raw", "confidence_norm",
+        "brightness", "brightness_temp", "sensor", "satellite", "daynight", "scan", "track",
+        "version", "source_product", "processing_type", "is_collocated"
+    ]
 
     for _, row in df.iterrows():
         try:
@@ -105,8 +109,17 @@ def _df_to_geojson(df: pd.DataFrame) -> dict:
             "lon": coords[0],
             "frp": props.get("frp") or 10.0,
             "date": props.get("acq_date") or "",
+            "time": props.get("acq_time") or "0000",
             "sensor": props.get("sensor") or "MODIS",
-            "confidence": props.get("confidence") or "nominal",
+            "satellite": props.get("satellite") or "TERRA",
+            "confidence": props.get("confidence") or props.get("confidence_raw") or "nominal",
+            "confidence_norm": props.get("confidence_norm") or 60,
+            "brightness": props.get("brightness") or 330.0,
+            "brightness_temp": props.get("brightness_temp") or 310.0,
+            "daynight": props.get("daynight") or "D",
+            "source_product": props.get("source_product") or "NASA_FIRMS",
+            "processing_type": props.get("processing_type") or "SP",
+            "is_collocated": bool(props.get("is_collocated", False)),
         })
 
     return {
@@ -152,18 +165,20 @@ async def get_hotspots(
     Return a GeoJSON FeatureCollection of raw fire hotspot detections.
     """
     # --- Parse bbox ---
-    if min_lon is not None and min_lat is not None and max_lon is not None and max_lat is not None:
-        p_min_lon, p_min_lat, p_max_lon, p_max_lat = min_lon, min_lat, max_lon, max_lat
-    elif bbox:
+    if isinstance(min_lon, (int, float)) and isinstance(min_lat, (int, float)) and isinstance(max_lon, (int, float)) and isinstance(max_lat, (int, float)):
+        p_min_lon, p_min_lat, p_max_lon, p_max_lat = float(min_lon), float(min_lat), float(max_lon), float(max_lat)
+    elif bbox and isinstance(bbox, str):
         p_min_lon, p_min_lat, p_max_lon, p_max_lat = _parse_bbox(bbox)
     else:
         p_min_lon, p_min_lat, p_max_lon, p_max_lat = 72.0, 20.0, 74.5, 22.0
 
     # --- Parse dates ---
     today = date.today()
+    s_date = start_date if isinstance(start_date, str) else None
+    e_date = end_date if isinstance(end_date, str) else None
     try:
-        sd = date.fromisoformat(start_date) if start_date else today - timedelta(days=7)
-        ed = date.fromisoformat(end_date) if end_date else today
+        sd = date.fromisoformat(s_date) if s_date else today - timedelta(days=7)
+        ed = date.fromisoformat(e_date) if e_date else today
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=f"Invalid date format: {exc}")
 
@@ -175,14 +190,15 @@ async def get_hotspots(
     use_archive = sd < cutoff
 
     # --- Fetch data ---
+    sensor_clean = sensor.strip().lower() if isinstance(sensor, str) else "both"
     frames: list[pd.DataFrame] = []
 
-    if sensor in ("modis", "both"):
+    if sensor_clean in ("modis", "both"):
         modis_df = await fetch_modis(p_min_lat, p_min_lon, p_max_lat, p_max_lon, sd, ed, use_archive)
         if not modis_df.empty:
             frames.append(modis_df)
 
-    if sensor in ("viirs", "both"):
+    if sensor_clean in ("viirs", "both"):
         viirs_df = await fetch_viirs(p_min_lat, p_min_lon, p_max_lat, p_max_lon, sd, ed, use_archive=use_archive)
         if not viirs_df.empty:
             frames.append(viirs_df)
@@ -200,7 +216,7 @@ async def get_hotspots(
     ]
 
     # Limit points according to limit query param
-    max_pts = limit if limit and limit > 0 else 500
+    max_pts = limit if isinstance(limit, int) and limit > 0 else 500
     if len(combined) > max_pts:
         combined = combined.sample(n=max_pts, random_state=42)
 

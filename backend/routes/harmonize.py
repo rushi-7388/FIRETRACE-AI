@@ -19,7 +19,11 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from services.firms_client import fetch_satellite_data, SATELLITE_CATALOG
-from services.harmonizer import harmonize_observations
+from services.harmonizer import (
+    harmonize_observations,
+    calculate_discontinuity_proof,
+    calculate_fire_season_shift,
+)
 from services.calendar_builder import build_calendar
 
 logger = logging.getLogger(__name__)
@@ -95,19 +99,21 @@ async def get_calendar(
     end_date: Optional[str] = Query(default=None),
     satellites: Optional[str] = Query(default=None, description="Comma-separated satellites"),
 ):
-    if min_lon is not None and min_lat is not None and max_lon is not None and max_lat is not None:
-        p_min_lon, p_min_lat, p_max_lon, p_max_lat = min_lon, min_lat, max_lon, max_lat
-    elif bbox:
+    if isinstance(min_lon, (int, float)) and isinstance(min_lat, (int, float)) and isinstance(max_lon, (int, float)) and isinstance(max_lat, (int, float)):
+        p_min_lon, p_min_lat, p_max_lon, p_max_lat = float(min_lon), float(min_lat), float(max_lon), float(max_lat)
+    elif bbox and isinstance(bbox, str):
         p_min_lon, p_min_lat, p_max_lon, p_max_lat = _parse_bbox(bbox)
     else:
         # Default: Surat / South Gujarat region
         p_min_lon, p_min_lat, p_max_lon, p_max_lat = 72.0, 20.0, 74.5, 22.0
 
     today = date.today()
-    sd = _normalize_date_str(start_date, is_end=False) if start_date else date(2000, 1, 1)
-    ed = _normalize_date_str(end_date, is_end=True) if end_date else today
+    s_date = start_date if isinstance(start_date, str) else None
+    e_date = end_date if isinstance(end_date, str) else None
+    sd = _normalize_date_str(s_date, is_end=False) if s_date else date(2000, 1, 1)
+    ed = _normalize_date_str(e_date, is_end=True) if e_date else today
 
-    sat_list = [s.strip().upper() for s in satellites.split(",")] if satellites else ["TERRA", "AQUA", "SNPP", "NOAA20", "NOAA21"]
+    sat_list = [s.strip().upper() for s in satellites.split(",")] if (isinstance(satellites, str) and satellites.strip()) else ["TERRA", "AQUA", "SNPP", "NOAA20", "NOAA21"]
 
     raw_df = await fetch_satellite_data(p_min_lat, p_min_lon, p_max_lat, p_max_lon, sd, ed, sat_list)
     harm_result = harmonize_observations(raw_df, grid_resolution_km=10.0)
@@ -247,3 +253,51 @@ async def get_anomaly_ranking(
         "total_anomalies_detected": len(anomalies),
         "top_ranked_anomalies": top_anomalies,
     }
+
+
+class ValidationAnalysisRequest(BaseModel):
+    bbox: Optional[str] = "72.0,20.0,74.5,22.0"
+    monthly: Optional[List[Dict[str, Any]]] = None
+
+
+@router.get("/validation/discontinuity-proof", summary="2012 Sensor Discontinuity Elimination Proof")
+@router.post("/validation/discontinuity-proof", summary="2012 Sensor Discontinuity Elimination Proof (POST with monthly records)")
+async def get_discontinuity_proof(
+    bbox: Optional[str] = Query(default="72.0,20.0,74.5,22.0", description="min_lon,min_lat,max_lon,max_lat"),
+    req: Optional[ValidationAnalysisRequest] = None,
+):
+    """
+    Evaluates raw vs harmonized counts across the 2012 VIIRS transition window (2008-2018),
+    mathematically proving elimination of the +274% sensor resolution artifact.
+    """
+    if req is not None and req.monthly is not None:
+        return calculate_discontinuity_proof(monthly_records=req.monthly)
+
+    target_bbox = req.bbox if (req and req.bbox) else (bbox or "72.0,20.0,74.5,22.0")
+    min_lon, min_lat, max_lon, max_lat = _parse_bbox(target_bbox)
+    sd = date(2008, 1, 1)
+    ed = date(2018, 12, 31)
+    raw_df = await fetch_satellite_data(min_lat, min_lon, max_lat, max_lon, sd, ed, ["TERRA", "AQUA", "SNPP"])
+    return calculate_discontinuity_proof(raw_df=raw_df)
+
+
+@router.get("/validation/season-shift", summary="25-Year Fire Season Shift & Climate Drift Detector")
+@router.post("/validation/season-shift", summary="25-Year Fire Season Shift & Climate Drift Detector (POST with monthly records)")
+async def get_season_shift(
+    bbox: Optional[str] = Query(default="72.0,20.0,74.5,22.0", description="min_lon,min_lat,max_lon,max_lat"),
+    req: Optional[ValidationAnalysisRequest] = None,
+):
+    """
+    Evaluates the 25-year record (2000-present) to detect Julian Day centroid drift
+    and burning season duration expansion between the MODIS baseline and modern era.
+    """
+    if req is not None and req.monthly is not None:
+        return calculate_fire_season_shift(req.monthly)
+
+    target_bbox = req.bbox if (req and req.bbox) else (bbox or "72.0,20.0,74.5,22.0")
+    min_lon, min_lat, max_lon, max_lat = _parse_bbox(target_bbox)
+    sd = date(2000, 1, 1)
+    today = date.today()
+    raw_df = await fetch_satellite_data(min_lat, min_lon, max_lat, max_lon, sd, today, ["TERRA", "AQUA", "SNPP"])
+    harm = harmonize_observations(raw_df, 10.0)
+    return calculate_fire_season_shift(harm["monthly"])

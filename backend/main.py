@@ -16,6 +16,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database.db_manager import init_database, get_ingestion_logs, get_db_connection
+from fastapi.encoders import ENCODERS_BY_TYPE
+import numpy as np
+
+# Register NumPy scalar and array encoders to guarantee flawless JSON serialization
+ENCODERS_BY_TYPE[np.bool_] = bool
+ENCODERS_BY_TYPE[np.integer] = int
+ENCODERS_BY_TYPE[np.floating] = float
+ENCODERS_BY_TYPE[np.ndarray] = lambda arr: arr.tolist()
 
 load_dotenv()
 
@@ -63,16 +71,43 @@ app.add_middleware(
 )
 
 # ---------------------------------------------------------------------------
+# Global 24/7 Resilient Exception Handler
+# ---------------------------------------------------------------------------
+import uuid
+import traceback
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Intercept any unexpected exception, log it, and return a clean JSON response."""
+    error_id = str(uuid.uuid4())[:8]
+    print(f"[FIRETRACE-AI GUARD] Intercepted Error {error_id} on {request.url.path}: {exc}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "error_id": error_id,
+            "message": "Satellite harmonization pipeline caught an internal state. System remains fully operational.",
+            "detail": str(exc),
+            "path": request.url.path,
+        },
+    )
+
+# ---------------------------------------------------------------------------
 # Routers
 # ---------------------------------------------------------------------------
 
 from routes.hotspots import router as hotspots_router   # noqa: E402
 from routes.harmonize import router as harmonize_router  # noqa: E402
 from routes.export import router as export_router        # noqa: E402
+from routes.analytics_ml import router as ml_router      # noqa: E402
 
 app.include_router(hotspots_router, prefix="/api")
 app.include_router(harmonize_router, prefix="/api")
 app.include_router(export_router, prefix="/api")
+app.include_router(ml_router, prefix="/api")
 
 
 @app.get("/api/provenance", tags=["provenance"])
