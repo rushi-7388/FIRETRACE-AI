@@ -52,7 +52,7 @@ const HDI_STEPS = [
 // ─── About ────────────────────────────────────────────────────────────────────
 export default function About() {
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-10 animate-fade-in overflow-y-auto h-[calc(100vh-56px)]">
+    <div className="max-w-4xl mx-auto px-6 py-8 space-y-10 animate-fade-in min-h-[calc(100vh-56px)] pb-16">
       {/* ── Hero ──────────────────────────────────────────────── */}
       <section className="text-center">
         <div className="flex justify-center mb-5">

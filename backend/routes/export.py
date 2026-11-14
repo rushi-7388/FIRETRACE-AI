@@ -65,7 +65,10 @@ async def export_data(req: ExportRequest):
     elif dtype == "raw_viirs":
         export_df = raw_df[raw_df["sensor"].str.upper().str.contains("VIIRS")]
     elif dtype == "matched":
-        export_df = raw_df[raw_df.get("is_collocated", False) == True]
+        if "is_collocated" in raw_df.columns:
+            export_df = raw_df[raw_df["is_collocated"] == True]
+        else:
+            export_df = raw_df.head(0)
     elif dtype in ("harmonized_monthly", "daily", "anomalies"):
         harm = harmonize_observations(raw_df)
         if dtype == "harmonized_monthly":

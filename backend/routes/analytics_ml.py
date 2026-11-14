@@ -13,6 +13,7 @@ FastAPI routes for Advanced AI/ML & Statistical Intelligence:
 from __future__ import annotations
 
 import logging
+import math
 from datetime import date
 from typing import Any, Dict, List, Optional
 import numpy as np
@@ -26,6 +27,33 @@ ENCODERS_BY_TYPE[np.bool_] = bool
 ENCODERS_BY_TYPE[np.integer] = int
 ENCODERS_BY_TYPE[np.floating] = float
 ENCODERS_BY_TYPE[np.ndarray] = lambda arr: arr.tolist()
+
+
+def _clean_nans(val: Any) -> Any:
+    """Recursively replaces NaN, Infinity, -Infinity with 0.0 to guarantee JSON compliance."""
+    if isinstance(val, float):
+        if math.isnan(val) or math.isinf(val):
+            return 0.0
+        return val
+    elif isinstance(val, dict):
+        return {k: _clean_nans(v) for k, v in val.items()}
+    elif isinstance(val, list):
+        return [_clean_nans(v) for v in val]
+    return val
+
+
+def _normalize_date_str(d_str: Optional[str], is_end: bool = False, fallback: Optional[date] = None) -> date:
+    if not d_str:
+        return fallback or date.today()
+    s = str(d_str).strip()
+    if len(s) == 7:  # YYYY-MM
+        s = f"{s}-28" if is_end else f"{s}-01"
+    elif len(s) == 4:  # YYYY
+        s = f"{s}-12-31" if is_end else f"{s}-01-01"
+    try:
+        return date.fromisoformat(s)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=f"Invalid date format: {exc}")
 
 from services.firms_client import fetch_satellite_data
 from services.harmonizer import harmonize_observations
@@ -165,10 +193,10 @@ async def get_fingerprint(
 @router.post("/compare-periods", summary="What-Changed Period-over-Period Differential Intelligence")
 async def post_compare_periods(req: ComparePeriodsRequest):
     min_lon, min_lat, max_lon, max_lat = _parse_bbox(req.bbox)
-    sd_a = date.fromisoformat(req.period_a_start)
-    ed_a = date.fromisoformat(req.period_a_end)
-    sd_b = date.fromisoformat(req.period_b_start)
-    ed_b = date.fromisoformat(req.period_b_end)
+    sd_a = _normalize_date_str(req.period_a_start, is_end=False)
+    ed_a = _normalize_date_str(req.period_a_end, is_end=True)
+    sd_b = _normalize_date_str(req.period_b_start, is_end=False)
+    ed_b = _normalize_date_str(req.period_b_end, is_end=True)
 
     raw_a = await fetch_satellite_data(min_lat, min_lon, max_lat, max_lon, sd_a, ed_a)
     raw_b = await fetch_satellite_data(min_lat, min_lon, max_lat, max_lon, sd_b, ed_b)

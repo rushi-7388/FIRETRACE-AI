@@ -129,8 +129,8 @@ export default function AnomalyIntelligence() {
         <div className="flex items-center gap-1.5 bg-bg-card border border-border-muted rounded-lg p-1 text-xs">
           <span className="text-[11px] text-text-muted px-2 font-mono">Baseline:</span>
           {[
-            { id: 'full', label: '2000–2024 (Full Record)' },
-            { id: 'viirs', label: '2012–2024 (VIIRS Era)' },
+            { id: 'full', label: '2000–2026 (Full Record)' },
+            { id: 'viirs', label: '2012–2026 (VIIRS Era)' },
             { id: 'modis', label: '2000–2011 (MODIS Era)' },
           ].map(opt => (
             <button

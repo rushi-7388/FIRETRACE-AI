@@ -8,11 +8,11 @@ import {
 import clsx from 'clsx'
 
 const SATELLITE_OPTIONS = [
-  { id: 'TERRA', label: 'Terra (MODIS)', year: '2000+' },
-  { id: 'AQUA', label: 'Aqua (MODIS)', year: '2002+' },
-  { id: 'SNPP', label: 'Suomi-NPP (VIIRS)', year: '2012+' },
-  { id: 'NOAA20', label: 'NOAA-20 (VIIRS)', year: '2018+' },
-  { id: 'NOAA21', label: 'NOAA-21 (VIIRS)', year: '2022+' },
+  { id: 'TERRA', label: 'Terra (MODIS)', year: '2000+', tag: 'Drifting' },
+  { id: 'AQUA', label: 'Aqua (MODIS)', year: '2002+', tag: 'Drifting' },
+  { id: 'SNPP', label: 'Suomi-NPP (VIIRS)', year: '2012–2026', tag: 'Retired Nov 2' },
+  { id: 'NOAA20', label: 'NOAA-20 (VIIRS)', year: '2018+', tag: 'Active' },
+  { id: 'NOAA21', label: 'NOAA-21 (VIIRS)', year: '2022+', tag: 'Primary Operational' },
 ]
 
 export default function GlobalFireMap() {
@@ -32,26 +32,60 @@ export default function GlobalFireMap() {
     }
   }, [])
 
-  // Extract unique sorted dates from hotspots
-  const uniqueDates = useMemo(() => {
+  // Extract continuous chronological timeline sequence
+  const timelineDates = useMemo(() => {
     if (!hotspots || hotspots.length === 0) return []
-    const dates = Array.from(new Set(hotspots.map((h) => h.date || h.acq_date).filter(Boolean)))
-    return dates.sort()
+    const dates = hotspots.map((h) => h.date || h.acq_date).filter(Boolean)
+    if (dates.length === 0) return []
+    const sorted = Array.from(new Set(dates)).sort()
+    const firstStr = sorted[0]
+    const lastStr = sorted[sorted.length - 1]
+
+    try {
+      const dStart = new Date(firstStr)
+      const dEnd = new Date(lastStr)
+      const diffDays = Math.round((dEnd - dStart) / (1000 * 60 * 60 * 24))
+
+      if (diffDays <= 90 && diffDays > 0) {
+        // Daily progression for operational window
+        const dailySeq = []
+        let cur = new Date(dStart)
+        while (cur <= dEnd) {
+          dailySeq.push(cur.toISOString().split('T')[0])
+          cur.setDate(cur.getDate() + 1)
+        }
+        return dailySeq
+      } else if (diffDays > 90) {
+        // Smooth progression across multi-month record
+        const stepDays = Math.max(1, Math.round(diffDays / 60))
+        const seq = []
+        let cur = new Date(dStart)
+        while (cur <= dEnd) {
+          seq.push(cur.toISOString().split('T')[0])
+          cur.setDate(cur.getDate() + stepDays)
+        }
+        if (!seq.includes(lastStr)) seq.push(lastStr)
+        return seq
+      }
+    } catch {
+      // Fallback
+    }
+    return sorted
   }, [hotspots])
 
-  // Reset playback if dates change
+  // Reset or initialize playback to latest date so all current hotspots are visible by default
   useEffect(() => {
-    if (uniqueDates.length > 0 && playbackIndex >= uniqueDates.length) {
-      setPlaybackIndex(uniqueDates.length - 1)
+    if (timelineDates.length > 0) {
+      setPlaybackIndex(timelineDates.length - 1)
     }
-  }, [uniqueDates])
+  }, [timelineDates.length])
 
   // Playback loop
   useEffect(() => {
-    if (isPlaying && uniqueDates.length > 0) {
+    if (isPlaying && timelineDates.length > 0) {
       timerRef.current = setInterval(() => {
         setPlaybackIndex((prev) => {
-          if (prev >= uniqueDates.length - 1) {
+          if (prev >= timelineDates.length - 1) {
             setIsPlaying(false)
             return prev
           }
@@ -64,7 +98,7 @@ export default function GlobalFireMap() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [isPlaying, playbackSpeed, uniqueDates.length])
+  }, [isPlaying, playbackSpeed, timelineDates.length])
 
   const toggleSat = (id) => {
     setSelectedSats((prev) =>
@@ -79,8 +113,8 @@ export default function GlobalFireMap() {
       (h) => selectedSats.includes(h.satellite || 'TERRA') || selectedSats.includes(h.sensor)
     )
 
-    if (uniqueDates.length > 0) {
-      const currentDate = uniqueDates[playbackIndex]
+    if (timelineDates.length > 0) {
+      const currentDate = timelineDates[playbackIndex]
       if (isCumulative) {
         list = list.filter((h) => (h.date || h.acq_date) <= currentDate)
       } else {
@@ -89,7 +123,7 @@ export default function GlobalFireMap() {
     }
 
     return list
-  }, [hotspots, selectedSats, uniqueDates, playbackIndex, isCumulative])
+  }, [hotspots, selectedSats, timelineDates, playbackIndex, isCumulative])
 
   // Fire Danger Rating calculation
   const fireDanger = useMemo(() => {
@@ -100,12 +134,10 @@ export default function GlobalFireMap() {
     return { label: 'LOW FIRE ACTIVITY', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', level: 'Low' }
   }, [filteredHotspots.length])
 
-  const currentDate = uniqueDates[playbackIndex] || 'All Observations'
-
   return (
-    <div className="h-[calc(100vh-56px)] flex flex-col p-3 space-y-2 bg-bg-primary">
+    <div className="w-full min-h-[calc(100vh-56px)] flex flex-col p-2 sm:p-4 space-y-3 bg-bg-primary">
       {/* Top Bar: Satellite Multi-Constellation Filter & Live Danger Rating */}
-      <div className="bg-bg-secondary border border-border-muted rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2.5">
+      <div className="w-full bg-bg-secondary border border-border-muted rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-md">
         <div className="flex items-center gap-2">
           <Satellite size={16} className="text-ember" />
           <span className="text-xs font-semibold text-text-primary">Constellation:</span>
@@ -124,6 +156,14 @@ export default function GlobalFireMap() {
                   )}
                 >
                   <span>{sat.label}</span>
+                  <span className={clsx(
+                    'text-[9px] px-1 rounded font-sans',
+                    sat.id === 'SNPP' ? 'bg-red-500/20 text-red-300' :
+                    sat.id === 'NOAA21' ? 'bg-emerald-500/20 text-emerald-300 font-semibold' :
+                    'bg-bg-secondary text-text-muted'
+                  )}>
+                    {sat.tag}
+                  </span>
                 </button>
               )
             })}
@@ -142,19 +182,19 @@ export default function GlobalFireMap() {
         </div>
       </div>
 
-      {/* Main Map with Leaflet Layer */}
-      <div className="flex-1 rounded-xl overflow-hidden border border-border-muted relative min-h-0">
+      {/* Main Map with Leaflet Layer - Large & Spacious */}
+      <div className="w-full flex-1 rounded-xl overflow-hidden border border-border-muted relative h-[780px] min-h-[780px] lg:h-[860px] lg:min-h-[860px] xl:h-[920px] xl:min-h-[920px] shadow-2xl">
         <FireMap customHotspots={filteredHotspots} />
       </div>
 
       {/* Interactive Timeline Playback Scrubber */}
-      {uniqueDates.length > 0 && (
+      {timelineDates.length > 0 && (
         <div className="bg-bg-secondary border border-border-muted rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
           {/* Controls */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className="bg-ember text-black hover:bg-ember/90 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+              className="bg-ember text-white hover:bg-ember/90 font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors shadow"
             >
               {isPlaying ? <Pause size={14} /> : <Play size={14} />}
               <span>{isPlaying ? 'PAUSE' : 'PLAY'}</span>
@@ -214,7 +254,7 @@ export default function GlobalFireMap() {
             <input
               type="range"
               min={0}
-              max={uniqueDates.length - 1}
+              max={timelineDates.length - 1}
               value={playbackIndex}
               onChange={(e) => {
                 setIsPlaying(false)
@@ -227,8 +267,8 @@ export default function GlobalFireMap() {
           {/* Current Date HUD */}
           <div className="flex items-center gap-2 bg-bg-card border border-border-muted px-3 py-1 rounded-lg">
             <span className="text-text-muted">Observation Date:</span>
-            <span className="text-ember font-bold text-sm">{currentDate}</span>
-            <span className="text-[10px] text-text-muted">({playbackIndex + 1}/{uniqueDates.length})</span>
+            <span className="text-ember font-bold text-sm">{timelineDates[playbackIndex] || '-'}</span>
+            <span className="text-[10px] text-text-muted">({playbackIndex + 1}/{timelineDates.length})</span>
           </div>
         </div>
       )}

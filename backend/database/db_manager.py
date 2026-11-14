@@ -16,10 +16,12 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = Path(os.getenv("DATABASE_PATH", "./firetrace.db"))
+DEFAULT_DB_PATH = Path(__file__).resolve().parent / "firetrace.db"
+DB_PATH = Path(os.getenv("DATABASE_PATH", str(DEFAULT_DB_PATH)))
 
 
 def get_db_connection() -> sqlite3.Connection:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -58,10 +60,26 @@ def init_database() -> None:
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
 
+        CREATE TABLE IF NOT EXISTS cached_hotspots (
+            hotspot_id TEXT PRIMARY KEY,
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL,
+            acq_date TEXT NOT NULL,
+            acq_time TEXT,
+            frp REAL NOT NULL,
+            confidence_norm INTEGER NOT NULL,
+            satellite TEXT NOT NULL,
+            sensor TEXT NOT NULL,
+            is_collocated INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_hotspots_spatial ON cached_hotspots(latitude, longitude);
+        CREATE INDEX IF NOT EXISTS idx_hotspots_date ON cached_hotspots(acq_date);
+
         INSERT OR IGNORE INTO satellites (satellite_id, name, agency, launch_date, status) VALUES
-            ('TERRA', 'Terra (EOS AM-1)', 'NASA', '1999-12-18', 'active'),
-            ('AQUA', 'Aqua (EOS PM-1)', 'NASA', '2002-05-04', 'active'),
-            ('SNPP', 'Suomi National Polar-orbiting Partnership', 'NASA/NOAA', '2011-10-28', 'active'),
+            ('TERRA', 'Terra (EOS AM-1)', 'NASA', '1999-12-18', 'drifting_orbit'),
+            ('AQUA', 'Aqua (EOS PM-1)', 'NASA', '2002-05-04', 'drifting_orbit'),
+            ('SNPP', 'Suomi National Polar-orbiting Partnership', 'NASA/NOAA', '2011-10-28', 'retired_nov_2026'),
             ('NOAA20', 'NOAA-20 (JPSS-1)', 'NOAA/NASA', '2017-11-18', 'active'),
             ('NOAA21', 'NOAA-21 (JPSS-2)', 'NOAA/NASA', '2022-11-10', 'active');
 
@@ -99,4 +117,72 @@ def get_ingestion_logs() -> List[Dict[str, Any]]:
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
+
+
+def save_hotspots_to_db(records: List[Dict[str, Any]]) -> int:
+    """Persists a batch of normalized satellite fire hotspots into SQLite."""
+    if not records:
+        return 0
+    conn = get_db_connection()
+    cur = conn.cursor()
+    inserted = 0
+    try:
+        cur.executemany("""
+            INSERT OR REPLACE INTO cached_hotspots (
+                hotspot_id, latitude, longitude, acq_date, acq_time,
+                frp, confidence_norm, satellite, sensor, is_collocated
+            ) VALUES (
+                :hotspot_id, :latitude, :longitude, :acq_date, :acq_time,
+                :frp, :confidence_norm, :satellite, :sensor, :is_collocated
+            )
+        """, [
+            {
+                "hotspot_id": f"{r.get('satellite', 'SAT')}_{r.get('acq_date')}_{r.get('latitude')}_{r.get('longitude')}_{r.get('acq_time', '0000')}",
+                "latitude": float(r.get("latitude", 0.0)),
+                "longitude": float(r.get("longitude", 0.0)),
+                "acq_date": str(r.get("acq_date")),
+                "acq_time": str(r.get("acq_time", "")),
+                "frp": float(r.get("frp", 10.0)),
+                "confidence_norm": int(r.get("confidence_norm", 60)),
+                "satellite": str(r.get("satellite", "UNKNOWN")),
+                "sensor": str(r.get("sensor", "UNKNOWN")),
+                "is_collocated": 1 if r.get("is_collocated") else 0,
+            }
+            for r in records
+        ])
+        conn.commit()
+        inserted = len(records)
+    except Exception as exc:
+        logger.warning("Failed to save hotspots to database: %s", exc)
+    finally:
+        conn.close()
+    return inserted
+
+
+def query_hotspots_from_db(
+    min_lat: float, min_lon: float, max_lat: float, max_lon: float,
+    start_date: str, end_date: str, limit: int = 500
+) -> List[Dict[str, Any]]:
+    """Retrieves cached hotspots within spatial-temporal bounding box from SQLite."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT latitude, longitude, acq_date, acq_time, frp,
+                   confidence_norm, satellite, sensor, is_collocated
+            FROM cached_hotspots
+            WHERE latitude >= ? AND latitude <= ?
+              AND longitude >= ? AND longitude <= ?
+              AND acq_date >= ? AND acq_date <= ?
+            ORDER BY acq_date DESC, frp DESC
+            LIMIT ?
+        """, (min_lat, max_lat, min_lon, max_lon, start_date, end_date, limit))
+        rows = [dict(r) for r in cur.fetchall()]
+        return rows
+    except Exception as exc:
+        logger.warning("Failed to query hotspots from database: %s", exc)
+        return []
+    finally:
+        conn.close()
+
 

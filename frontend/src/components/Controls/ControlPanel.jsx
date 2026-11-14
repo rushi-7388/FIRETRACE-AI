@@ -9,7 +9,7 @@ import ExportButton from '../Export/ExportButton.jsx'
 import { GLOBAL_LOCATIONS_CATALOG } from '../Map/GlobalLocationSearch.jsx'
 
 // ─── Year / Month options ─────────────────────────────────────────────────────
-const YEARS  = Array.from({ length: 25 }, (_, i) => 2000 + i)
+const YEARS  = Array.from({ length: 27 }, (_, i) => 2000 + i) // 2000 through 2026
 const MONTHS = [
   { v: '01', l: 'Jan' }, { v: '02', l: 'Feb' }, { v: '03', l: 'Mar' },
   { v: '04', l: 'Apr' }, { v: '05', l: 'May' }, { v: '06', l: 'Jun' },

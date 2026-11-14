@@ -15,10 +15,15 @@ cache/
 !package.json
 !package-lock.json
 !tsconfig.json
+!vercel.json
+!frontend/vercel.json
+!**/vercel.json
 
 # Node
 node_modules/
 frontend/dist/
+dist/
+**/dist/
 frontend/.env
 
 # IDE

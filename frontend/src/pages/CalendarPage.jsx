@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import useAppStore from '../store/useAppStore.js'
 import BurnCalendar from '../components/Calendar/BurnCalendar.jsx'
+import CalendarTelemetryCompanion from '../components/Calendar/CalendarTelemetryCompanion.jsx'
 import { Calendar, Search, Eye, AlertCircle, BarChart2, Layers, Flame, TrendingUp, AlertTriangle, ShieldCheck } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
@@ -31,11 +32,24 @@ export default function CalendarPage() {
     const pctDiff = curMed > 0 ? ((curHdi - curMed) / curMed) * 100 : 0
     const isCritical = pctDiff >= 30 || Math.abs(latestRec?.z_score || 0) >= 2.0
 
+    const peakNum = parseInt(peakMonthNum, 10)
+    let seasonLabel = 'Pre-Monsoon Agricultural & Forest Fire Peak'
+    if ([6, 7, 8].includes(peakNum)) {
+      seasonLabel = 'Boreal & Mediterranean Summer Fire Window'
+    } else if ([8, 9, 10].includes(peakNum)) {
+      seasonLabel = 'Tropical Peatland & Savanna Dry Season'
+    } else if ([11, 12, 1, 2].includes(peakNum)) {
+      seasonLabel = 'Southern Hemisphere Summer Bushfire Season'
+    } else if ([3, 4, 5].includes(peakNum)) {
+      seasonLabel = 'Pre-Monsoon Agricultural & Forest Fire Peak'
+    } else {
+      seasonLabel = 'Seasonal Dry Weather Burning Front'
+    }
+
     return {
       peakMonth: peakMonthName,
-      primarySeason: 'March – May (Pre-Monsoon Dry Peak)',
-      secondarySeason: 'October – November (Post-Harvest Stubble)',
-      currentPeriod: `${latestRec?.year || 2024}-${String(latestRec?.month || 12).padStart(2, '0')}`,
+      primarySeason: `${peakMonthName} Focus (${seasonLabel})`,
+      currentPeriod: `${latestRec?.year || 2026}-${String(latestRec?.month || 11).padStart(2, '0')}`,
       currentHdi: curHdi.toFixed(2),
       historicalMedian: curMed.toFixed(2),
       percentDiff: pctDiff.toFixed(1),
@@ -70,7 +84,9 @@ export default function CalendarPage() {
   }, [calendarData])
 
   const handleInspectDate = async (monthNum) => {
-    const targetDate = `2024-${String(monthNum).padStart(2, '0')}`
+    const latestRec = calendarData?.[calendarData.length - 1]
+    const targetYear = latestRec?.year || 2026
+    const targetDate = `${targetYear}-${String(monthNum).padStart(2, '0')}`
     setInspectLoading(true)
     try {
       const res = await axios.get('/api/observations/inspect', {
@@ -141,14 +157,19 @@ export default function CalendarPage() {
               {fireSeasonIntel.isCritical ? <AlertTriangle size={14} className="animate-pulse" /> : <ShieldCheck size={14} />}
               <span>{fireSeasonIntel.isCritical ? 'CRITICAL PERIOD ACTIVE' : 'NORMAL ACTIVITY LEVEL'}</span>
             </div>
-            <div className="text-[11px] text-text-muted mt-0.5">Relative to 25-yr baseline</div>
+            <div className="text-[11px] text-text-muted mt-0.5">Relative to 27-yr baseline (2000–2026)</div>
           </div>
         </div>
       )}
 
-      {/* Main Heatmap Calendar */}
-      <div className="bg-bg-card border border-border-muted rounded-xl p-4">
-        <BurnCalendar />
+      {/* Main Heatmap Calendar & Telemetry Companion Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+        <div className="xl:col-span-5 bg-bg-card border border-border-muted rounded-xl p-4 overflow-x-auto shadow-xl">
+          <BurnCalendar />
+        </div>
+        <div className="xl:col-span-7 bg-bg-card border border-border-muted rounded-xl p-4 shadow-xl">
+          <CalendarTelemetryCompanion />
+        </div>
       </div>
 
       {/* Dynamic Baseline Comparison Table */}

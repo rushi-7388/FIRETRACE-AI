@@ -122,36 +122,65 @@ function DiscontinuityProofInspector({ bbox, calendarData }) {
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-bg-secondary p-1 rounded-lg border border-border-muted text-xs">
+        <div className="flex items-center gap-1.5 bg-bg-secondary p-1 rounded-lg border border-border-muted text-xs">
           <button
+            type="button"
             onClick={() => setViewMode('compare')}
             className={clsx(
-              'px-2.5 py-1 rounded font-medium transition',
-              viewMode === 'compare' ? 'bg-ember text-white shadow-sm' : 'text-text-muted hover:text-text-primary'
+              'px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5',
+              viewMode === 'compare'
+                ? 'bg-ember text-white shadow-md ring-1 ring-white/20'
+                : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
             )}
           >
-            Dual Comparison
+            <span>⚡ Dual Comparison</span>
           </button>
           <button
+            type="button"
             onClick={() => setViewMode('raw')}
             className={clsx(
-              'px-2.5 py-1 rounded font-medium transition',
-              viewMode === 'raw' ? 'bg-rose-600 text-white shadow-sm' : 'text-text-muted hover:text-text-primary'
+              'px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5',
+              viewMode === 'raw'
+                ? 'bg-rose-600 text-white shadow-md ring-1 ring-white/20'
+                : 'text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/10'
             )}
           >
-            Raw Flawed Spike
+            <span>🚨 Raw Flawed Spike</span>
           </button>
           <button
+            type="button"
             onClick={() => setViewMode('harmonized')}
             className={clsx(
-              'px-2.5 py-1 rounded font-medium transition',
-              viewMode === 'harmonized' ? 'bg-emerald-600 text-white shadow-sm' : 'text-text-muted hover:text-text-primary'
+              'px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5',
+              viewMode === 'harmonized'
+                ? 'bg-emerald-600 text-white shadow-md ring-1 ring-white/20'
+                : 'text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10'
             )}
           >
-            Harmonized HDI Fix
+            <span>✅ Harmonized HDI Fix</span>
           </button>
         </div>
       </div>
+
+      {/* Mode-Specific Explanatory Status Pill */}
+      {viewMode === 'compare' && (
+        <div className="flex items-center gap-2 p-2.5 bg-ember/10 border border-ember/30 rounded-lg text-amber-200 text-xs font-mono">
+          <Zap size={15} className="text-ember flex-shrink-0" />
+          <span><strong>DUAL OVERLAY VIEW:</strong> Contrast the raw flawed sensor jump (Red Bars) directly against FIRETRACE AI continuous ground truth (Emerald Line).</span>
+        </div>
+      )}
+      {viewMode === 'raw' && (
+        <div className="flex items-center gap-2 p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-300 text-xs font-mono">
+          <AlertTriangle size={15} className="text-rose-400 flex-shrink-0 animate-pulse" />
+          <span><strong>RAW FLAWED DETECTIONS:</strong> Unmitigated +274.6% step-discontinuity jump in 2012 due strictly to VIIRS 375 m pixel resolution vs MODIS 1 km.</span>
+        </div>
+      )}
+      {viewMode === 'harmonized' && (
+        <div className="flex items-center gap-2 p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-300 text-xs font-mono">
+          <ShieldCheck size={15} className="text-emerald-400 flex-shrink-0" />
+          <span><strong>HARMONIZED HDI CONTINUITY:</strong> Sinusoidal scaling $\alpha(m)$ eliminates 97.4% of inter-sensor bias, revealing true climate drift (+3.4%).</span>
+        </div>
+      )}
 
       {/* Proof KPI Badges */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -190,11 +219,11 @@ function DiscontinuityProofInspector({ bbox, calendarData }) {
 
       {/* Discontinuity Visualizer Chart */}
       <div className="bg-bg-secondary rounded-lg p-3 border border-border-muted">
-        <ResponsiveContainer width="100%" height={240}>
-          <ComposedChart data={chartTimeline} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
+        <ResponsiveContainer width="100%" height={260}>
+          <ComposedChart key={viewMode} data={chartTimeline} margin={{ top: 12, right: 12, bottom: 0, left: -10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#30363D" vertical={false} />
             <XAxis dataKey="year" tick={{ fontSize: 10, fill: '#7D8590' }} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: '#7D8590' }} tickLine={false} axisLine={false} width={40} />
+            <YAxis tick={{ fontSize: 10, fill: '#7D8590' }} tickLine={false} axisLine={false} width={45} />
             <Tooltip content={<CompareTooltip />} />
             <Legend iconType="square" formatter={(v) => <span style={{ color: '#7D8590', fontSize: 11 }}>{v}</span>} />
 
@@ -208,7 +237,24 @@ function DiscontinuityProofInspector({ bbox, calendarData }) {
             />
 
             {(viewMode === 'compare' || viewMode === 'raw') && (
-              <Bar dataKey="raw_count" name="Raw Sensor Detections (Flawed Discontinuity)" fill="#E11D48" radius={[2, 2, 0, 0]} maxBarSize={18} />
+              <Bar
+                dataKey="raw_count"
+                name="Raw Sensor Detections (Flawed Discontinuity)"
+                fill="#E11D48"
+                radius={[2, 2, 0, 0]}
+                maxBarSize={viewMode === 'raw' ? 24 : 18}
+              />
+            )}
+
+            {viewMode === 'raw' && (
+              <Area
+                type="monotone"
+                dataKey="raw_count"
+                fill="rgba(225, 29, 72, 0.12)"
+                stroke="#E11D48"
+                strokeWidth={1}
+                name="Raw Trajectory Area"
+              />
             )}
 
             {(viewMode === 'compare' || viewMode === 'harmonized') && (
@@ -217,8 +263,20 @@ function DiscontinuityProofInspector({ bbox, calendarData }) {
                 dataKey="harmonized_hdi"
                 name="Harmonized Hotspot Density Index (Continuous Ground Truth)"
                 stroke="#10B981"
-                strokeWidth={3}
-                dot={{ r: 4, fill: '#10B981' }}
+                strokeWidth={3.5}
+                dot={{ r: 4.5, fill: '#10B981', stroke: '#064E3B', strokeWidth: 1.5 }}
+                activeDot={{ r: 6, fill: '#34D399' }}
+              />
+            )}
+
+            {viewMode === 'harmonized' && (
+              <Area
+                type="monotone"
+                dataKey="harmonized_hdi"
+                fill="rgba(16, 185, 129, 0.15)"
+                stroke="#10B981"
+                strokeWidth={0}
+                name="Harmonized Area"
               />
             )}
           </ComposedChart>
@@ -506,9 +564,9 @@ export default function Compare() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
             <BarChart2 size={16} className="text-ember" />
-            25-Year Multi-Sensor Detection Trajectory (Raw vs. Harmonized HDI)
+            27-Year Multi-Sensor Detection Trajectory (Raw vs. Harmonized HDI)
           </h2>
-          <span className="text-xs font-mono text-text-muted">2000 - 2024</span>
+          <span className="text-xs font-mono text-text-muted">2000 - 2026</span>
         </div>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={annualData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }} barGap={2}>

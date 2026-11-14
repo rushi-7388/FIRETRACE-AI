@@ -7,17 +7,371 @@ import clsx from 'clsx'
 
 // ─── Extensive Offline Global Fire Biomes & Capital Cities Database ──────────
 export const GLOBAL_LOCATIONS_CATALOG = [
-  // ── Asia & India ──
+  // ── Surat City & Micro-Areas (NASA Challenge Focus Study Zones) ──
   {
-    name: 'Surat & South Gujarat',
+    name: 'Adajan, Surat',
     country: 'India',
-    region: 'Asia',
-    category: 'Agricultural & Deciduous',
-    bbox: [72.0, 20.0, 74.5, 22.0],
-    center: [21.17, 72.83],
-    zoom: 9,
-    description: 'Primary demonstration study zone: Sugarcane clearing & dry deciduous forest belt.'
+    region: 'Surat & Gujarat',
+    category: 'Surat Urban / Tapi West',
+    center: [21.196, 72.793],
+    preferredRadius: 10,
+    zoom: 13,
+    description: 'Surat urban ward: Tapi river bank residential & fringe vegetation zone.'
   },
+  {
+    name: 'Vesu & VIP Road, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat South Corridor',
+    center: [21.145, 72.775],
+    preferredRadius: 10,
+    zoom: 13,
+    description: 'South Surat urban & agricultural boundary corridor near Dumas canal.'
+  },
+  {
+    name: 'Varachha & Sarthana, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat East Fringe',
+    center: [21.225, 72.875],
+    preferredRadius: 10,
+    zoom: 13,
+    description: 'East Surat industrial & sugarcane crop periphery near Tapi river.'
+  },
+  {
+    name: 'Katargam & Singanpore, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat North Tapi',
+    center: [21.233, 72.825],
+    preferredRadius: 10,
+    zoom: 13,
+    description: 'North Surat diamond polishing & riverside vegetative fringe.'
+  },
+  {
+    name: 'Rander & Jahangirpura, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat West Tapi Bank',
+    center: [21.218, 72.785],
+    preferredRadius: 10,
+    zoom: 13,
+    description: 'Historic settlement on Tapi west bank with agricultural orchards.'
+  },
+  {
+    name: 'Hazira Port & Industrial Belt, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat Petrochem & Port',
+    center: [21.108, 72.635],
+    preferredRadius: 25,
+    zoom: 12,
+    description: 'Major industrial hub, petrochemical flare points, and deep-sea port zone.'
+  },
+  {
+    name: 'Dumas & Magdalla Beach, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat Coastal Arabian Belt',
+    center: [21.085, 72.715],
+    preferredRadius: 10,
+    zoom: 13,
+    description: 'Arabian sea coastal strip, mangrove fringe, and Tapi estuary.'
+  },
+  {
+    name: 'Udhna & Pandesara GIDC, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat Textile Hub',
+    center: [21.145, 72.845],
+    preferredRadius: 10,
+    zoom: 13,
+    description: 'Industrial manufacturing, textile dyeing mills, and urban clusters.'
+  },
+  {
+    name: 'Sachin GIDC & SEZ, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat Industrial SEZ',
+    center: [21.085, 72.885],
+    preferredRadius: 10,
+    zoom: 13,
+    description: 'Special Economic Zone & southern rural agricultural boundary.'
+  },
+  {
+    name: 'Pal & Althan, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat Southwest Corridor',
+    center: [21.165, 72.765],
+    preferredRadius: 10,
+    zoom: 13,
+    description: 'Southwestern Surat expansion corridor near Bhatha canal.'
+  },
+  {
+    name: 'Kamrej Sugar Cane Belt, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat Agricultural Stubble',
+    center: [21.265, 72.965],
+    preferredRadius: 25,
+    zoom: 11,
+    description: 'Intense post-harvest sugarcane crop residue burning zone.'
+  },
+  {
+    name: 'Bardoli & Mandvi Sugar/Forest Belt, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat East Agro Valley',
+    center: [21.125, 73.115],
+    preferredRadius: 25,
+    zoom: 11,
+    description: 'Historical Bardoli agricultural plain & Mandvi teak forest edge.'
+  },
+  {
+    name: 'Olpad & Kim Coastal Agro, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat North Coastal Plain',
+    center: [21.335, 72.755],
+    preferredRadius: 25,
+    zoom: 11,
+    description: 'Paddy, cotton, and seasonal stubble burning along the Gulf of Khambhat.'
+  },
+  {
+    name: 'Mahuva & Mangrol, Surat',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Surat South Agro Belt',
+    center: [21.015, 73.155],
+    preferredRadius: 25,
+    zoom: 11,
+    description: 'Sugarcane cultivation and rural farm biomass management.'
+  },
+
+  // ── Gujarat Major Districts & Key Ecological Zones ──
+  {
+    name: 'Surat & South Gujarat (Full Region)',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'South Gujarat Regional Focus',
+    center: [21.17, 72.83],
+    preferredRadius: 100,
+    zoom: 9,
+    description: 'Official NASA Space Apps study region: 27-year harmonized baseline.'
+  },
+  {
+    name: 'Navsari & Bilimora',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'South Gujarat Agro',
+    center: [20.95, 72.93],
+    preferredRadius: 25,
+    zoom: 11,
+    description: 'Horticulture, mango/chikoo orchards, and Purna river plain.'
+  },
+  {
+    name: 'Valsad & Vapi GIDC',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Chemical Corridor / Coastal',
+    center: [20.61, 72.93],
+    preferredRadius: 25,
+    zoom: 11,
+    description: 'Daman-Vapi industrial zone and southern coastal plains.'
+  },
+  {
+    name: 'Dang & Saputara Forest Reserve',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Dense Deciduous Forest',
+    center: [20.75, 73.70],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Dense Western Ghats bamboo & teak forest prone to dry season wildfires.'
+  },
+  {
+    name: 'Bharuch & Ankleshwar GIDC',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Narmada Agro-Industrial',
+    center: [21.70, 72.99],
+    preferredRadius: 25,
+    zoom: 11,
+    description: 'Narmada river basin agricultural fields and industrial chemical belt.'
+  },
+  {
+    name: 'Narmada & Kevadia (Statue of Unity)',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Forest Reserve & Dam Basin',
+    center: [21.83, 73.72],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Shoolpaneshwar Wildlife Sanctuary and teak forest hill tracts.'
+  },
+  {
+    name: 'Vadodara (Baroda) District',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Central Gujarat Agro-Urban',
+    center: [22.30, 73.18],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Vishwamitri basin fertile plains and petrochemical complexes.'
+  },
+  {
+    name: 'Anand & Kheda Agro Belt',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Charotar Alluvial Plains',
+    center: [22.56, 72.93],
+    preferredRadius: 25,
+    zoom: 11,
+    description: 'Intensive tobacco, dairy, and crop residue agricultural belt.'
+  },
+  {
+    name: 'Ahmedabad City & Sanand',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Metropolitan & Auto Hub',
+    center: [23.02, 72.57],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Sabarmati urban corridor, industrial clusters, and rural periphery.'
+  },
+  {
+    name: 'Gandhinagar & GIFT City',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Capital Corridor',
+    center: [23.22, 72.64],
+    preferredRadius: 25,
+    zoom: 11,
+    description: 'Sabarmati river plain, green city tree cover, and GIFT financial hub.'
+  },
+  {
+    name: 'Rajkot District',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Saurashtra Semi-Arid Plateau',
+    center: [22.30, 70.80],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Saurashtra semi-arid plateau, peanut farming, and scrub fires.'
+  },
+  {
+    name: 'Junagadh & Gir National Park',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Dry Deciduous Lion Sanctuary',
+    center: [21.52, 70.46],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Asiatic lion wildlife sanctuary prone to March-May leaf litter fires.'
+  },
+  {
+    name: 'Bhavnagar & Alang Coast',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Coastal Gulf of Khambhat',
+    center: [21.76, 72.15],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Ship recycling coast, onion agro plains, and Gulf scrub.'
+  },
+  {
+    name: 'Jamnagar & Marine National Park',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Gulf of Kutch Coastal',
+    center: [22.47, 70.07],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Mangrove swamps, oil refineries, and coastal scrub.'
+  },
+  {
+    name: 'Kutch (Bhuj, Gandhidham & Rann)',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Desert & Banni Grasslands',
+    center: [23.24, 69.67],
+    preferredRadius: 100,
+    zoom: 8,
+    description: 'Great Rann salt flats, arid savanna, and Acacia scrub fire regime.'
+  },
+  {
+    name: 'Mehsana & Patan Agro Plains',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'North Gujarat Semi-Arid',
+    center: [23.59, 72.37],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Dairy, mustard, castor farming, and dry seasonal burn cycles.'
+  },
+  {
+    name: 'Banaskantha & Palanpur',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Aravalli Foothill Agro',
+    center: [24.17, 72.43],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Aravalli foothills, potato farming, and arid forest edge.'
+  },
+  {
+    name: 'Sabarkantha & Himatnagar',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Hilly Forest Periphery',
+    center: [23.60, 72.96],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Polo forest fringe and tribal agricultural clearing.'
+  },
+  {
+    name: 'Panchmahal & Godhra Forest Fringe',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Dry Deciduous Tribal Belt',
+    center: [22.77, 73.61],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Forest reserve periphery with annual pre-monsoon biomass fires.'
+  },
+  {
+    name: 'Dahod Tribal Forest Reserve',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Eastern Forest Border',
+    center: [22.83, 74.25],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Hilly tribal deciduous forest bordering Madhya Pradesh.'
+  },
+  {
+    name: 'Morbi Ceramic Hub',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Machchhu River Basin',
+    center: [22.81, 70.83],
+    preferredRadius: 25,
+    zoom: 11,
+    description: 'Ceramic industrial cluster and semi-arid cotton agriculture.'
+  },
+  {
+    name: 'Surendranagar & Little Rann',
+    country: 'India',
+    region: 'Surat & Gujarat',
+    category: 'Salt Flats & Scrub',
+    center: [22.72, 71.64],
+    preferredRadius: 50,
+    zoom: 10,
+    description: 'Wild Ass Wildlife Sanctuary and cotton farming plains.'
+  },
+
+  // ── National & Global Fire Biomes ──
   {
     name: 'Punjab & Haryana Crop Belt',
     country: 'India',
@@ -297,7 +651,7 @@ export default function GlobalLocationSearch({ onSelectLocation }) {
     return list
   }, [query, activeRegion])
 
-  // Live OpenStreetMap Nominatim Geocoding for ANY location on Earth
+  // Live  Nominatim Geocoding for ANY location on Earth
   useEffect(() => {
     if (query.trim().length < 3) {
       setOnlineResults([])
@@ -310,8 +664,10 @@ export default function GlobalLocationSearch({ onSelectLocation }) {
     searchTimeoutRef.current = setTimeout(async () => {
       setIsSearchingOnline(true)
       try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
-        const res = await fetch(url)
+        const url = `https://nominatim..org/search?format=json&q=${encodeURIComponent(query)}&limit=7&addressdetails=1`
+        const res = await fetch(url, {
+          headers: { 'Accept': 'application/json' }
+        })
         if (res.ok) {
           const data = await res.json()
           const mapped = data.map(item => {
@@ -319,6 +675,13 @@ export default function GlobalLocationSearch({ onSelectLocation }) {
             const maxLat = parseFloat(item.boundingbox[1])
             const minLon = parseFloat(item.boundingbox[2])
             const maxLon = parseFloat(item.boundingbox[3])
+            const type = (item.type || '').toLowerCase()
+            const isMicro = ['suburb', 'neighbourhood', 'residential', 'quarter', 'village', 'hamlet', 'farm'].includes(type)
+            const isMedium = ['city', 'town', 'municipality', 'borough'].includes(type)
+            const isBroad = ['county', 'district', 'region'].includes(type)
+            const preferredRadius = isMicro ? 10 : (isMedium ? 25 : (isBroad ? 50 : 100))
+            const zoom = isMicro ? 13 : (isMedium ? 11 : 9)
+
             return {
               name: item.display_name.split(',')[0],
               country: item.display_name.split(',').slice(-1)[0]?.trim() || '',
@@ -326,7 +689,8 @@ export default function GlobalLocationSearch({ onSelectLocation }) {
               category: item.type ? item.type.toUpperCase() : 'PLACE',
               bbox: [minLon, minLat, maxLon, maxLat],
               center: [parseFloat(item.lat), parseFloat(item.lon)],
-              zoom: 9,
+              preferredRadius,
+              zoom,
               description: item.display_name,
               isOnline: true,
             }
@@ -338,7 +702,7 @@ export default function GlobalLocationSearch({ onSelectLocation }) {
       } finally {
         setIsSearchingOnline(false)
       }
-    }, 450)
+    }, 400)
 
     return () => clearTimeout(searchTimeoutRef.current)
   }, [query])
@@ -360,7 +724,7 @@ export default function GlobalLocationSearch({ onSelectLocation }) {
     setQuery(loc.name)
   }
 
-  const regions = ['All', 'Asia', 'North America', 'South America', 'Europe', 'Oceania', 'Africa']
+  const regions = ['All', 'Surat & Gujarat', 'Asia', 'North America', 'South America', 'Europe', 'Oceania', 'Africa']
 
   return (
     <div className="relative w-full max-w-xl" ref={dropdownRef}>
@@ -377,7 +741,7 @@ export default function GlobalLocationSearch({ onSelectLocation }) {
             setQuery(e.target.value)
             setIsOpen(true)
           }}
-          placeholder="Search any place on Earth (e.g. California, Amazon, Greece, Punjab, Siberia)..."
+          placeholder="Search any area in Surat, Gujarat, or Earth (e.g. Adajan, Vesu, Hazira, Dang, Amazon)..."
           className="w-full bg-bg-card/95 backdrop-blur-md border border-border-muted hover:border-ember/50 focus:border-ember
                      text-text-primary text-xs pl-9 pr-8 py-2 rounded-xl shadow-lg focus:outline-none transition-all font-sans"
         />
@@ -434,8 +798,7 @@ export default function GlobalLocationSearch({ onSelectLocation }) {
             {onlineResults.length > 0 && (
               <div className="p-1.5 bg-sky-500/5">
                 <div className="text-[10px] font-bold text-sky-400 px-2 py-1 flex items-center gap-1">
-                  <Sparkles size={11} />
-                  Live Earth Search Results (OpenStreetMap)
+                  
                 </div>
                 {onlineResults.map((item, idx) => (
                   <button
@@ -502,11 +865,7 @@ export default function GlobalLocationSearch({ onSelectLocation }) {
             )}
           </div>
 
-          {/* Footer Guide */}
-          <div className="p-2 bg-bg-secondary/70 border-t border-border-muted text-[10px] text-text-muted flex items-center justify-between font-mono">
-            <span>NASA Space Apps 2026 • Global Coverage</span>
-            <span className="text-ember">Type any place to auto-geolocate</span>
-          </div>
+          
         </div>
       )}
     </div>

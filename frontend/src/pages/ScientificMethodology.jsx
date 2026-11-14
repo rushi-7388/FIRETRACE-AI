@@ -97,9 +97,34 @@ export default function ScientificMethodology() {
         </div>
       </section>
 
-      {/* 4. Peer-Reviewed References */}
+      {/* 4. NASA 2026 Operational Transition: Suomi-NPP to NOAA-20 & NOAA-21 */}
       <section className="bg-bg-card border border-border-muted rounded-xl p-5 space-y-3">
-        <h2 className="text-base font-semibold text-text-primary">4. Scientific Literature Citations</h2>
+        <div className="flex items-center gap-2">
+          <Layers className="text-amber-400" size={18} />
+          <h2 className="text-base font-semibold text-text-primary">4. NASA FIRMS 2026 Transition: Suomi-NPP to NOAA-20/21 VIIRS</h2>
+        </div>
+        <p className="text-xs text-text-muted leading-relaxed">
+          As officially announced in NASA FIRMS operational alerts, the pioneering <strong>Suomi-NPP satellite has ceased operations</strong>. FIRETRACE AI addresses this critical space operations transition by ingesting next-generation <strong>NOAA-20 and NOAA-21 VIIRS</strong> (375 m) sensors, ensuring an unbroken 27-year climate record from January 2000 through 2026:
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1 text-xs font-mono">
+          <div className="p-3 bg-bg-secondary rounded border border-border-muted">
+            <span className="text-sky-400 font-bold block mb-1">Terra & Aqua MODIS</span>
+            <span className="text-text-muted text-[11px]">2000–2026 (Continuous 26+ Years Baseline Foundation)</span>
+          </div>
+          <div className="p-3 bg-bg-secondary rounded border border-border-muted">
+            <span className="text-amber-400 font-bold block mb-1">Suomi-NPP VIIRS</span>
+            <span className="text-text-muted text-[11px]">2012–2026 (14-Year Mission Overlap Reference)</span>
+          </div>
+          <div className="p-3 bg-bg-secondary rounded border border-border-muted">
+            <span className="text-emerald-400 font-bold block mb-1">NOAA-20 & NOAA-21 VIIRS</span>
+            <span className="text-text-muted text-[11px]">2018–2026+ (Active Operational Continuity Sensors)</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Peer-Reviewed References */}
+      <section className="bg-bg-card border border-border-muted rounded-xl p-5 space-y-3">
+        <h2 className="text-base font-semibold text-text-primary">5. Scientific Literature Citations</h2>
         <ul className="text-xs text-text-muted space-y-2 list-disc pl-4 leading-relaxed font-sans">
           <li>
             <strong>Schroeder, W., Oliva, P., Giglio, L., & Csiszar, I. A. (2014).</strong> The New 375 m VIIRS Active Fire Detection Product: Algorithm Description and Initial Assessment. <em>Remote Sensing of Environment</em>, 143, 85–96.

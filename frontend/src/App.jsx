@@ -10,6 +10,7 @@ import ReportsDownloads from './pages/ReportsDownloads.jsx'
 import ScientificMethodology from './pages/ScientificMethodology.jsx'
 import AIIntelligence from './pages/AIIntelligence.jsx'
 import Logo from './components/Brand/Logo.jsx'
+import MissionResilienceBadge from './components/Brand/MissionResilienceBadge.jsx'
 import {
   Flame, Globe, Calendar, BarChart2, MapPin, Zap, Download, BookOpen, Satellite, BrainCircuit
 } from 'lucide-react'
@@ -31,7 +32,7 @@ function Navbar() {
   const location = useLocation()
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border-muted bg-bg-primary/95 backdrop-blur-md">
+    <header className="relative z-40 border-b border-border-muted bg-bg-primary">
       <div className="max-w-screen-2xl mx-auto px-3 h-14 flex items-center justify-between">
         {/* Brand */}
         <NavLink to="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
@@ -63,10 +64,9 @@ function Navbar() {
           ))}
         </nav>
 
-        {/* Right Badge */}
-        <div className="hidden xl:flex items-center gap-2 text-xs text-text-muted font-mono">
-          <Satellite size={13} className="text-ember" />
-          <span>NASA FIRMS Core</span>
+        {/* Mission Resilience & Hacker Defense Badge */}
+        <div className="flex items-center gap-2">
+          <MissionResilienceBadge />
         </div>
       </div>
     </header>

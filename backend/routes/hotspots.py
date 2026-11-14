@@ -30,6 +30,36 @@ router = APIRouter(tags=["hotspots"])
 # Helpers
 # ---------------------------------------------------------------------------
 
+import math
+
+
+def _clean_nans(val: Any) -> Any:
+    """Recursively replaces NaN, Infinity, -Infinity with 0.0 to guarantee JSON compliance."""
+    if isinstance(val, float):
+        if math.isnan(val) or math.isinf(val):
+            return 0.0
+        return val
+    elif isinstance(val, dict):
+        return {k: _clean_nans(v) for k, v in val.items()}
+    elif isinstance(val, list):
+        return [_clean_nans(v) for v in val]
+    return val
+
+
+def _normalize_date_str(d_str: Optional[str], is_end: bool = False, fallback: Optional[date] = None) -> date:
+    if not d_str:
+        return fallback or date.today()
+    s = str(d_str).strip()
+    if len(s) == 7:  # YYYY-MM
+        s = f"{s}-28" if is_end else f"{s}-01"
+    elif len(s) == 4:  # YYYY
+        s = f"{s}-12-31" if is_end else f"{s}-01-01"
+    try:
+        return date.fromisoformat(s)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=f"Invalid date format: {exc}")
+
+
 _DEFAULT_BBOX = (-180.0, -90.0, 180.0, 90.0)  # (min_lon, min_lat, max_lon, max_lat)
 
 
@@ -174,13 +204,8 @@ async def get_hotspots(
 
     # --- Parse dates ---
     today = date.today()
-    s_date = start_date if isinstance(start_date, str) else None
-    e_date = end_date if isinstance(end_date, str) else None
-    try:
-        sd = date.fromisoformat(s_date) if s_date else today - timedelta(days=7)
-        ed = date.fromisoformat(e_date) if e_date else today
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=f"Invalid date format: {exc}")
+    sd = _normalize_date_str(start_date, is_end=False, fallback=today - timedelta(days=7))
+    ed = _normalize_date_str(end_date, is_end=True, fallback=today)
 
     if sd > ed:
         raise HTTPException(status_code=422, detail="start_date must be ≤ end_date.")
@@ -225,4 +250,4 @@ async def get_hotspots(
         len(combined), sensor, p_min_lon, p_max_lon, p_min_lat, p_max_lat,
     )
 
-    return _df_to_geojson(combined)
+    return _clean_nans(_df_to_geojson(combined))

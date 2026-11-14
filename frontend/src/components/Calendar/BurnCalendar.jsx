@@ -48,16 +48,17 @@ export default function BurnCalendar() {
   useEffect(() => {
     if (!calendarData || calendarData.length === 0 || !svgRef.current) return
 
-    const margin = { top: 36, right: 20, bottom: 60, left: 52 }
-    const totalW = dims.width
+    const margin = { top: 58, right: 20, bottom: 64, left: 52 }
     const MONTHS = 12
 
     // Get unique sorted years
     const years = Array.from(new Set(calendarData.map(d => d.year))).sort((a, b) => a - b)
     const nYears = years.length
 
-    const cellW = Math.floor((totalW - margin.left - margin.right) / MONTHS)
-    const cellH = Math.min(22, Math.max(14, Math.floor((dims.height - margin.top - margin.bottom - 50) / nYears)))
+    // Balanced cell width: crisp, square-like proportions
+    const cellW = Math.max(28, Math.min(38, Math.floor((dims.width - margin.left - margin.right) / MONTHS)))
+    const totalW = cellW * MONTHS + margin.left + margin.right
+    const cellH = 18 // Spacious, high-clarity row height for all years
     const innerH = cellH * nYears
     const totalH = innerH + margin.top + margin.bottom + 44  // 44 for legend
 
@@ -82,34 +83,41 @@ export default function BurnCalendar() {
     // ── Title ────────────────────────────────────────────────
     svg.append('text')
       .attr('x', margin.left)
-      .attr('y', 20)
-      .attr('fill', '#E6EDF3')
+      .attr('y', 22)
+      .attr('fill', '#F0F6FC')
       .attr('font-size', 13)
-      .attr('font-weight', 600)
-      .attr('font-family', 'Inter, sans-serif')
-      .text('Burning Activity Calendar - Hotspot Density Index (HDI)')
+      .attr('font-weight', 700)
+      .attr('letter-spacing', '0.01em')
+      .attr('font-family', 'Inter, -apple-system, sans-serif')
+      .text('Burning Activity Calendar — Monthly Hotspot Density Index (HDI)')
 
     // ── Month header (X-axis) ────────────────────────────────
-    const monthLabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+    const monthFullLabels = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+    const monthShortLabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+    const useFull = cellW >= 32
+    const monthLabels = useFull ? monthFullLabels : monthShortLabels
+
     monthLabels.forEach((lbl, i) => {
       g.append('text')
         .attr('x', i * cellW + cellW / 2)
-        .attr('y', -8)
+        .attr('y', -10)
         .attr('text-anchor', 'middle')
-        .attr('fill', '#7D8590')
-        .attr('font-size', 11)
-        .attr('font-family', 'Inter, sans-serif')
+        .attr('fill', '#C9D1D9')
+        .attr('font-size', useFull ? 10.5 : 11)
+        .attr('font-weight', 600)
+        .attr('font-family', 'JetBrains Mono, monospace')
         .text(lbl)
     })
 
     // ── Year labels (Y-axis) ─────────────────────────────────
     years.forEach((year, yi) => {
       g.append('text')
-        .attr('x', -6)
+        .attr('x', -8)
         .attr('y', yi * cellH + cellH / 2 + 4)
         .attr('text-anchor', 'end')
-        .attr('fill', '#7D8590')
-        .attr('font-size', 10)
+        .attr('fill', '#C9D1D9')
+        .attr('font-size', 10.5)
+        .attr('font-weight', 600)
         .attr('font-family', 'JetBrains Mono, monospace')
         .text(year)
     })
@@ -222,14 +230,15 @@ export default function BurnCalendar() {
       .attr('stroke-width', 0.5)
 
     g.append('text')
-      .attr('x', legendX + legendH + 4)
+      .attr('x', legendX + legendH + 6)
       .attr('y', legendY + legendH - 1)
-      .attr('fill', '#7D8590')
-      .attr('font-size', 10)
+      .attr('fill', '#C9D1D9')
+      .attr('font-size', 10.5)
+      .attr('font-weight', 500)
       .text('No data')
 
     g.append('rect')
-      .attr('x', legendX + 60)
+      .attr('x', legendX + 68)
       .attr('y', legendY)
       .attr('width', legendW)
       .attr('height', legendH)
@@ -237,22 +246,24 @@ export default function BurnCalendar() {
       .attr('fill', `url(#${gradId})`)
 
     g.append('text')
-      .attr('x', legendX + 60)
-      .attr('y', legendY + legendH + 14)
-      .attr('fill', '#7D8590')
-      .attr('font-size', 10)
+      .attr('x', legendX + 68)
+      .attr('y', legendY + legendH + 15)
+      .attr('fill', '#C9D1D9')
+      .attr('font-size', 10.5)
+      .attr('font-weight', 500)
       .text('Low HDI')
 
     g.append('text')
-      .attr('x', legendX + 60 + legendW)
-      .attr('y', legendY + legendH + 14)
+      .attr('x', legendX + 68 + legendW)
+      .attr('y', legendY + legendH + 15)
       .attr('text-anchor', 'end')
-      .attr('fill', '#7D8590')
-      .attr('font-size', 10)
+      .attr('fill', '#C9D1D9')
+      .attr('font-size', 10.5)
+      .attr('font-weight', 500)
       .text('High HDI')
 
     // Zero-fire & Anomaly legend
-    const legOffset = legendX + 60 + legendW + 20
+    const legOffset = legendX + 68 + legendW + 24
     g.append('rect')
       .attr('x', legOffset)
       .attr('y', legendY)
@@ -264,14 +275,15 @@ export default function BurnCalendar() {
       .attr('stroke-width', 0.8)
 
     g.append('text')
-      .attr('x', legOffset + 16)
+      .attr('x', legOffset + 18)
       .attr('y', legendY + legendH - 1)
-      .attr('fill', '#7D8590')
-      .attr('font-size', 10)
+      .attr('fill', '#C9D1D9')
+      .attr('font-size', 10.5)
+      .attr('font-weight', 500)
       .text('0 Fire (QC OK)')
 
     g.append('rect')
-      .attr('x', legOffset + 100)
+      .attr('x', legOffset + 115)
       .attr('y', legendY)
       .attr('width', 12)
       .attr('height', legendH)
@@ -281,10 +293,11 @@ export default function BurnCalendar() {
       .attr('stroke-width', 1.5)
 
     g.append('text')
-      .attr('x', legOffset + 116)
+      .attr('x', legOffset + 133)
       .attr('y', legendY + legendH - 1)
-      .attr('fill', '#7D8590')
-      .attr('font-size', 10)
+      .attr('fill', '#C9D1D9')
+      .attr('font-size', 10.5)
+      .attr('font-weight', 600)
       .text('Anomaly (|z| > 2)')
 
   }, [calendarData, dims])

@@ -60,6 +60,11 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+/* Hide Leaflet & Tile Provider Attribution Text */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
 .leaflet-popup-content-wrapper {
   background: #1C2128;
   color: #E6EDF3;
@@ -88,14 +93,67 @@ body {
   background: #21262D !important;
 }
 
+/* ─── Leaflet Draw Toolbar & Actions Layout Fix ───────────── */
+.leaflet-top.leaflet-left {
+  top: 66px !important;
+  left: 14px !important;
+  z-index: 900 !important;
+}
+
+.leaflet-draw-toolbar {
+  border-radius: 8px !important;
+  border: 1px solid #30363D !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
+  overflow: hidden;
+}
+
 .leaflet-draw-toolbar a {
   background-color: #1C2128 !important;
-  border-color: #30363D !important;
+  border-bottom: 1px solid #30363D !important;
+  color: #E6EDF3 !important;
+  transition: all 0.15s ease;
+}
+
+.leaflet-draw-toolbar a:hover {
+  background-color: #2D333B !important;
+  color: #FF4500 !important;
+}
+
+.leaflet-draw-actions {
+  left: 36px !important;
+  top: 0px !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+  border: 1px solid #FF4500 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.85) !important;
+  background-color: #161B22 !important;
+  z-index: 950 !important;
+}
+
+.leaflet-draw-actions li {
+  background-color: #161B22 !important;
+  border-right: 1px solid #30363D !important;
+}
+
+.leaflet-draw-actions li:last-child {
+  border-right: none !important;
 }
 
 .leaflet-draw-actions a {
-  background-color: #1C2128 !important;
+  background-color: #161B22 !important;
   color: #E6EDF3 !important;
+  font-family: inherit !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 0 12px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  transition: all 0.15s ease;
+}
+
+.leaflet-draw-actions a:hover {
+  background-color: #FF4500 !important;
+  color: #FFFFFF !important;
 }
 
 /* ─── Calendar Heatmap Cells ──────────────────────────────── */

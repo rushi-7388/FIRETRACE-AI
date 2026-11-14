@@ -47,15 +47,18 @@ export default function AnomalyChart() {
   const calendarData = useAppStore(s => s.calendarData)
   const loading = useAppStore(s => s.loading)
 
-  // Get available years
+  // Get available years (2026 down to 2000)
   const years = useMemo(() => {
-    if (!calendarData) return []
-    return Array.from(new Set(calendarData.map(d => d.year))).sort((a, b) => b - a)
+    if (!calendarData || calendarData.length === 0) {
+      return Array.from({ length: 27 }, (_, i) => 2026 - i)
+    }
+    const extracted = Array.from(new Set(calendarData.map(d => d.year))).sort((a, b) => b - a)
+    return extracted.length > 0 ? extracted : Array.from({ length: 27 }, (_, i) => 2026 - i)
   }, [calendarData])
 
   const [selectedYear, setSelectedYear] = useState(null)
 
-  const year = selectedYear ?? years[0] ?? 2023
+  const year = selectedYear ?? years[0] ?? 2026
 
   const chartData = useMemo(() => {
     if (!calendarData) return []

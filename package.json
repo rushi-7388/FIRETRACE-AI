@@ -1,0 +1,11 @@
+{
+  "name": "firetrace-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FIRETRACE AI - NASA Space Apps Challenge 2026 - MODIS & VIIRS Multi-Sensor Harmonization Platform",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "cd frontend && npm run dev",
+    "start": "cd frontend && npm run preview"
+  }
+}

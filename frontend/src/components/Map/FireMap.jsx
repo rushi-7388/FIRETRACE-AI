@@ -1,10 +1,10 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
-import { MapContainer, TileLayer, useMap, useMapEvents, FeatureGroup, CircleMarker, Popup, Rectangle } from 'react-leaflet'
-import L from 'leaflet'
+import { MapContainer, TileLayer, useMap, FeatureGroup, CircleMarker, Popup, Rectangle, ZoomControl, GeoJSON } from 'react-leaflet'
+import L from '../../utils/leaflet-setup.js'
 import useAppStore from '../../store/useAppStore.js'
 import { frpToColor, frpToRadius } from '../../utils/colors.js'
 import { formatDate } from '../../utils/format.js'
-import { MapPin, Crosshair, Layers, Upload, Sliders, CheckCircle2, ShieldCheck, Flame, Compass, Globe, Sparkles } from 'lucide-react'
+import { MapPin, Crosshair, Layers, Upload, Sliders, CheckCircle2, ShieldCheck, Flame, Compass, Globe, Sparkles, Target } from 'lucide-react'
 import clsx from 'clsx'
 import GlobalLocationSearch from './GlobalLocationSearch.jsx'
 
@@ -40,6 +40,39 @@ function calculateBboxAreaKm2([w, s, e, n]) {
   return Math.round(dLat * dLon)
 }
 
+// Ray-casting point-in-polygon verification for irregular AOI boundaries
+function isPointInRing([lon, lat], ring) {
+  let inside = false
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1]
+    const xj = ring[j][0], yj = ring[j][1]
+    const intersect = ((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)
+    if (intersect) inside = !inside
+  }
+  return inside
+}
+
+function isHotspotInGeoJson(lat, lon, geojson) {
+  if (!geojson) return true
+  try {
+    const pt = [lon, lat]
+    const features = geojson.type === 'FeatureCollection' ? geojson.features : (geojson.type === 'Feature' ? [geojson] : [{ geometry: geojson }])
+    for (const f of features) {
+      const geom = f.geometry || f
+      if (geom.type === 'Polygon') {
+        if (isPointInRing(pt, geom.coordinates[0])) return true
+      } else if (geom.type === 'MultiPolygon') {
+        for (const poly of geom.coordinates) {
+          if (isPointInRing(pt, poly[0])) return true
+        }
+      }
+    }
+    return false
+  } catch {
+    return true
+  }
+}
+
 // ─── Gujarat approximate outline polygon ─────────────────────────────────────
 const GUJARAT_OUTLINE = [
   [24.7, 68.1], [24.7, 70.0], [23.6, 68.3], [22.8, 68.5],
@@ -52,22 +85,14 @@ const GUJARAT_OUTLINE = [
 
 // ─── Region presets ───────────────────────────────────────────────────────────
 const REGION_PRESETS = {
-  surat:      { bbox: [72.6, 21.0, 73.2, 21.4], label: 'Surat',      center: [21.17, 72.83], zoom: 10 },
-  ahmedabad:  { bbox: [72.4, 22.9, 73.0, 23.3], label: 'Ahmedabad',  center: [23.03, 72.59], zoom: 10 },
-  gujarat:    { bbox: [68.1, 20.1, 74.5, 24.7], label: 'Gujarat',    center: [22.26, 71.19], zoom: 7  },
-  amazon:     { bbox: [-62, -10, -50, -2],       label: 'Amazon',     center: [-6, -56],      zoom: 5  },
-  australia:  { bbox: [135, -38, 155, -25],      label: 'Australia',  center: [-32, 145],     zoom: 5  },
+  surat: { bbox: [72.6, 21.0, 73.2, 21.4], label: 'Surat', center: [21.17, 72.83], zoom: 10 },
+  ahmedabad: { bbox: [72.4, 22.9, 73.0, 23.3], label: 'Ahmedabad', center: [23.03, 72.59], zoom: 10 },
+  gujarat: { bbox: [68.1, 20.1, 74.5, 24.7], label: 'Gujarat', center: [22.26, 71.19], zoom: 7 },
+  amazon: { bbox: [-62, -10, -50, -2], label: 'Amazon', center: [-6, -56], zoom: 5 },
+  australia: { bbox: [135, -38, 155, -25], label: 'Australia', center: [-32, 145], zoom: 5 },
 }
 
-// ─── Map Click Handler ────────────────────────────────────────────────────────
-function MapClickHandler({ onLocationClicked }) {
-  useMapEvents({
-    click(e) {
-      onLocationClicked(e.latlng)
-    },
-  })
-  return null
-}
+
 
 // ─── DrawControl component ────────────────────────────────────────────────────
 function DrawControl({ onBboxChange }) {
@@ -75,54 +100,87 @@ function DrawControl({ onBboxChange }) {
   const drawRef = useRef(null)
 
   useEffect(() => {
-    if (!window.L || !window.L.Control || !window.L.Control.Draw) return
+    let active = true
 
-    const drawnItems = new L.FeatureGroup()
-    map.addLayer(drawnItems)
+    async function initDraw() {
+      if (typeof window !== 'undefined') {
+        window.L = L
+        globalThis.L = L
+      }
 
-    const drawControl = new L.Control.Draw({
-      edit:  { featureGroup: drawnItems },
-      draw:  {
-        polygon: {
-          allowIntersection: false,
-          showArea: true,
-          shapeOptions: { color: '#FF4500', weight: 2, fillOpacity: 0.25 },
-        },
-        rectangle: {
-          shapeOptions: { color: '#FF4500', weight: 2, fillOpacity: 0.2 },
-        },
-        circle:    false,
-        marker:    false,
-        polyline:  false,
-        circlemarker: false,
-      },
-    })
-    map.addControl(drawControl)
-    drawRef.current = { drawControl, drawnItems }
+      if (!L?.Control?.Draw) {
+        try {
+          await import('leaflet-draw')
+        } catch (e) {
+          console.warn('Leaflet draw load:', e)
+        }
+      }
 
-    map.on(L.Draw.Event.CREATED, (e) => {
-      drawnItems.clearLayers()
-      drawnItems.addLayer(e.layer)
-      const bounds = e.layer.getBounds()
-      const west = parseFloat(bounds.getWest().toFixed(4))
-      const south = parseFloat(bounds.getSouth().toFixed(4))
-      const east = parseFloat(bounds.getEast().toFixed(4))
-      const north = parseFloat(bounds.getNorth().toFixed(4))
-      const bbox = [west, south, east, north]
+      if (!active) return
+      const DrawClass = L?.Control?.Draw || (typeof window !== 'undefined' && window.L?.Control?.Draw)
+      if (!DrawClass) return
 
-      // Approximate geodesic area in km2
-      const avgLatRad = ((north + south) / 2) * (Math.PI / 180)
-      const heightKm = Math.abs(north - south) * 111.13
-      const widthKm = Math.abs(east - west) * 111.13 * Math.cos(avgLatRad)
-      const approxAreaKm2 = Math.round(heightKm * widthKm)
+      try {
+        const drawnItems = new L.FeatureGroup()
+        map.addLayer(drawnItems)
 
-      onBboxChange(bbox, approxAreaKm2)
-    })
+        const drawControl = new DrawClass({
+          edit: { featureGroup: drawnItems },
+          draw: {
+            polygon: {
+              allowIntersection: false,
+              showArea: true,
+              shapeOptions: { color: '#FF4500', weight: 2, fillOpacity: 0.25 },
+            },
+            rectangle: {
+              shapeOptions: { color: '#FF4500', weight: 2, fillOpacity: 0.2 },
+            },
+            circle: false,
+            marker: false,
+            polyline: false,
+            circlemarker: false,
+          },
+        })
+        map.addControl(drawControl)
+        drawRef.current = { drawControl, drawnItems }
+
+        const createdEvent = L?.Draw?.Event?.CREATED || (typeof window !== 'undefined' && window.L?.Draw?.Event?.CREATED) || 'draw:created'
+
+        const handleCreated = (e) => {
+          drawnItems.clearLayers()
+          drawnItems.addLayer(e.layer)
+          const bounds = e.layer.getBounds()
+          const west = parseFloat(bounds.getWest().toFixed(4))
+          const south = parseFloat(bounds.getSouth().toFixed(4))
+          const east = parseFloat(bounds.getEast().toFixed(4))
+          const north = parseFloat(bounds.getNorth().toFixed(4))
+          const bbox = [west, south, east, north]
+
+          // Approximate geodesic area in km2
+          const avgLatRad = ((north + south) / 2) * (Math.PI / 180)
+          const heightKm = Math.abs(north - south) * 111.13
+          const widthKm = Math.abs(east - west) * 111.13 * Math.cos(avgLatRad)
+          const approxAreaKm2 = Math.round(heightKm * widthKm)
+
+          onBboxChange(bbox, approxAreaKm2)
+        }
+
+        map.on(createdEvent, handleCreated)
+        return () => {
+          map.removeControl(drawControl)
+          map.removeLayer(drawnItems)
+          map.off(createdEvent, handleCreated)
+        }
+      } catch (err) {
+        console.warn('DrawControl setup error:', err)
+      }
+    }
+
+    const cleanupPromise = initDraw()
 
     return () => {
-      map.removeControl(drawControl)
-      map.removeLayer(drawnItems)
-      map.off(L.Draw.Event.CREATED)
+      active = false
+      cleanupPromise.then(cleanup => cleanup && cleanup())
     }
   }, [map, onBboxChange])
 
@@ -143,13 +201,16 @@ function BboxRectangle({ bbox }) {
   )
 }
 
-// ─── FlyToRegion component ────────────────────────────────────────────────────
-function FlyToRegion({ target }) {
+// ─── FlyToRegion component (Fires once and cleans up) ─────────────────────────
+function FlyToRegion({ target, onComplete }) {
   const map = useMap()
   useEffect(() => {
     if (!target) return
     map.flyTo(target.center, target.zoom, { duration: 1.2 })
-  }, [target, map])
+    if (onComplete) {
+      onComplete()
+    }
+  }, [target, map, onComplete])
   return null
 }
 
@@ -159,9 +220,9 @@ function FRPLegend() {
     <div className="absolute bottom-6 left-3 z-[1000] bg-bg-card/95 backdrop-blur border border-border-muted rounded-lg px-3 py-2.5 text-xs space-y-1.5">
       <p className="label-muted mb-1">FRP (Fire Radiative Power)</p>
       {[
-        { color: '#FFD700', label: 'Low  < 10 MW'  },
+        { color: '#FFD700', label: 'Low  < 10 MW' },
         { color: '#FF8C00', label: 'Med  10–50 MW' },
-        { color: '#FF0000', label: 'High > 50 MW'  },
+        { color: '#FF0000', label: 'High > 50 MW' },
       ].map(({ color, label }) => (
         <div key={label} className="flex items-center gap-2">
           <span
@@ -180,80 +241,113 @@ const BASEMAPS = {
   dark: {
     name: 'Dark',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+    attribution: '',
     maxZoom: 16,
   },
   satellite: {
     name: 'Satellite',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    attribution: '',
     maxZoom: 18,
   },
   osm: {
     name: 'OSM',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '',
     maxZoom: 19,
   },
 }
 
+// ─── Map Resize Invalidation Helper ───────────────────────────────────────────
+function MapResizeHandler() {
+  const map = useMap()
+  useEffect(() => {
+    map.invalidateSize()
+    const timer1 = setTimeout(() => map.invalidateSize(), 100)
+    const timer2 = setTimeout(() => map.invalidateSize(), 400)
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize()
+    })
+    const container = map.getContainer()
+    if (container) resizeObserver.observe(container)
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      resizeObserver.disconnect()
+    }
+  }, [map])
+  return null
+}
+
 // ─── Main FireMap ─────────────────────────────────────────────────────────────
 export default function FireMap({ customHotspots }) {
-  const bbox              = useAppStore(s => s.bbox)
-  const aoiAreaKm2        = useAppStore(s => s.aoiAreaKm2)
-  const aoiName           = useAppStore(s => s.aoiName)
+  const bbox = useAppStore(s => s.bbox)
+  const aoiAreaKm2 = useAppStore(s => s.aoiAreaKm2)
+  const aoiName = useAppStore(s => s.aoiName)
   const setBboxAndRefetch = useAppStore(s => s.setBboxAndRefetch)
-  const storeHotspots     = useAppStore(s => s.hotspots)
-  const hotspots          = customHotspots || storeHotspots
+  const customGeoJson = useAppStore(s => s.customGeoJson)
+  const setCustomGeoJson = useAppStore(s => s.setCustomGeoJson)
+  const storeHotspots = useAppStore(s => s.hotspots)
+  const hotspots = customHotspots || storeHotspots
   const [flyTarget, setFlyTarget] = useState(null)
   const [showOutline, setShowOutline] = useState(false)
-  const [basemap, setBasemap] = useState('dark')
+  const [basemap, setBasemap] = useState('osm')
   const [sensorFilter, setSensorFilter] = useState('all') // 'all' | 'modis' | 'viirs'
-  const [clickedLocation, setClickedLocation] = useState(null)
+  const [activeRadiusKm, setActiveRadiusKm] = useState(50)
   const fileInputRef = useRef(null)
 
   const handleBboxChange = useCallback((newBbox, areaKm2) => {
+    setCustomGeoJson(null)
     setBboxAndRefetch(newBbox, areaKm2, 'Custom Drawn AOI')
-  }, [setBboxAndRefetch])
+  }, [setBboxAndRefetch, setCustomGeoJson])
 
-  const handleSelectGlobalLocation = (loc) => {
-    let bbox = loc.bbox
-    if (bbox) {
-      let [w, s, e, n] = bbox
-      if (Math.abs(e - w) < 0.1) {
-        w -= 0.5
-        e += 0.5
-      }
-      if (Math.abs(n - s) < 0.1) {
-        s -= 0.5
-        n += 0.5
-      }
-      const fixedBbox = [parseFloat(w.toFixed(4)), parseFloat(s.toFixed(4)), parseFloat(e.toFixed(4)), parseFloat(n.toFixed(4))]
-      const area = calculateBboxAreaKm2(fixedBbox)
-      setBboxAndRefetch(fixedBbox, area, loc.name)
-      setFlyTarget({
-        center: loc.center || [(fixedBbox[1] + fixedBbox[3]) / 2, (fixedBbox[0] + fixedBbox[2]) / 2],
-        zoom: loc.zoom || 8,
-      })
-    }
-  }
-
-  const setAOIFromClick = (latlng, sizeDeg = 0.5, label = 'Custom Clicked AOI') => {
-    const lat = latlng.lat
-    const lng = latlng.lng
-    const w = parseFloat((lng - sizeDeg).toFixed(4))
-    const s = parseFloat((lat - sizeDeg).toFixed(4))
-    const e = parseFloat((lng + sizeDeg).toFixed(4))
-    const n = parseFloat((lat + sizeDeg).toFixed(4))
+  const setAOIWithRadius = (lat, lng, radiusKm, label = 'Study AOI') => {
+    setActiveRadiusKm(radiusKm)
+    setCustomGeoJson(null)
+    const avgLatRad = lat * (Math.PI / 180)
+    const dLat = radiusKm / 111.13
+    const dLon = radiusKm / (111.13 * Math.max(0.15, Math.cos(avgLatRad)))
+    const w = parseFloat((lng - dLon).toFixed(4))
+    const s = parseFloat((lat - dLat).toFixed(4))
+    const e = parseFloat((lng + dLon).toFixed(4))
+    const n = parseFloat((lat + dLat).toFixed(4))
     const newBbox = [w, s, e, n]
     const area = calculateBboxAreaKm2(newBbox)
-    const displayName = `${label} (${lat.toFixed(2)}°, ${lng.toFixed(2)}°)`
+    const displayName = `${label} [${radiusKm} km radius]`
     setBboxAndRefetch(newBbox, area, displayName)
-    setClickedLocation(null)
-    setFlyTarget({ center: [lat, lng], zoom: 8 })
+
+    let zoom = 13
+    if (radiusKm >= 1000) zoom = 5
+    else if (radiusKm >= 500) zoom = 6
+    else if (radiusKm >= 300) zoom = 7
+    else if (radiusKm >= 100) zoom = 9
+    else if (radiusKm >= 50) zoom = 10
+    else if (radiusKm >= 25) zoom = 11
+    else zoom = 13
+
+    setFlyTarget({ center: [lat, lng], zoom })
+  }
+
+  const changeActiveRadius = (newRadiusKm) => {
+    setActiveRadiusKm(newRadiusKm)
+    const centerLat = (bbox[1] + bbox[3]) / 2
+    const centerLng = (bbox[0] + bbox[2]) / 2
+    const cleanLabel = (aoiName || 'AOI').split('[')[0].trim()
+    setAOIWithRadius(centerLat, centerLng, newRadiusKm, cleanLabel)
+  }
+
+  const handleSelectGlobalLocation = (loc) => {
+    setCustomGeoJson(null)
+    const center = loc.center || [
+      (loc.bbox[1] + loc.bbox[3]) / 2,
+      (loc.bbox[0] + loc.bbox[2]) / 2,
+    ]
+    const radius = loc.preferredRadius || activeRadiusKm || 25
+    setAOIWithRadius(center[0], center[1], radius, loc.name)
   }
 
   const snapToRegion = (key) => {
+    setCustomGeoJson(null)
     const preset = REGION_PRESETS[key]
     if (!preset) return
     setBboxAndRefetch(preset.bbox, null, preset.label)
@@ -270,7 +364,9 @@ export default function FireMap({ customHotspots }) {
         const computedBbox = getGeoJsonBbox(parsed)
         if (computedBbox) {
           const area = calculateBboxAreaKm2(computedBbox)
-          setBboxAndRefetch(computedBbox, area, file.name.replace(/\.[^/.]+$/, ''))
+          const aoiTitle = file.name.replace(/\.[^/.]+$/, '')
+          setCustomGeoJson(parsed)
+          setBboxAndRefetch(computedBbox, area, aoiTitle, parsed)
           setFlyTarget({
             center: [(computedBbox[1] + computedBbox[3]) / 2, (computedBbox[0] + computedBbox[2]) / 2],
             zoom: 8,
@@ -283,15 +379,16 @@ export default function FireMap({ customHotspots }) {
     reader.readAsText(file)
   }
 
-  // Filter hotspots by sensor layer
+  // Filter hotspots by sensor layer and polygon boundary
   const displayedHotspots = (hotspots || []).filter((pt) => {
-    if (sensorFilter === 'modis') return pt.sensor?.toUpperCase().includes('MODIS')
-    if (sensorFilter === 'viirs') return pt.sensor?.toUpperCase().includes('VIIRS')
+    if (sensorFilter === 'modis' && !pt.sensor?.toUpperCase().includes('MODIS')) return false
+    if (sensorFilter === 'viirs' && !pt.sensor?.toUpperCase().includes('VIIRS')) return false
+    if (customGeoJson && !isHotspotInGeoJson(pt.lat, pt.lon, customGeoJson)) return false
     return true
   })
 
   return (
-    <div className="relative w-full h-full rounded-xl overflow-hidden border border-border-muted">
+    <div className="relative w-full h-full min-h-[600px] rounded-xl overflow-hidden border border-border-muted flex flex-col">
       {/* Hidden GeoJSON input */}
       <input
         type="file"
@@ -302,20 +399,20 @@ export default function FireMap({ customHotspots }) {
       />
 
       {/* Top Floating Controls & Global Earth Search Bar */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 z-[1000] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+      <div className="absolute top-2.5 left-2.5 right-2.5 z-[1010] flex items-center justify-between gap-2.5 pointer-events-none">
         {/* Universal Earth Search (Any city, country, biome) */}
-        <div className="pointer-events-auto w-72 sm:w-84 md:w-96 shadow-xl">
+        <div className="pointer-events-auto w-64 sm:w-72 md:w-80 shadow-xl flex-shrink-0">
           <GlobalLocationSearch onSelectLocation={handleSelectGlobalLocation} />
         </div>
 
         {/* Quick-snap regions, Basemaps & Layer Controls Bar */}
-        <div className="pointer-events-auto flex items-center gap-1.5 flex-wrap bg-bg-card/95 backdrop-blur-md border border-border-muted rounded-xl p-1 shadow-lg">
+        <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full bg-bg-card/95 backdrop-blur-md border border-border-muted rounded-xl p-1 shadow-lg scrollbar-none flex-shrink">
           <div className="hidden lg:flex items-center gap-1">
             {Object.entries(REGION_PRESETS).map(([key, { label }]) => (
               <button
                 key={key}
                 onClick={() => snapToRegion(key)}
-                className="bg-bg-secondary hover:bg-bg-hover text-text-primary text-[11px] px-2 py-0.5 rounded-lg border border-border-muted hover:border-ember hover:text-ember transition-colors"
+                className="bg-bg-secondary hover:bg-bg-hover text-text-primary text-[11px] px-2 py-0.5 rounded-lg border border-border-muted hover:border-ember hover:text-ember transition-colors whitespace-nowrap flex-shrink-0 font-medium"
               >
                 {label}
               </button>
@@ -324,12 +421,45 @@ export default function FireMap({ customHotspots }) {
 
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="bg-bg-secondary hover:bg-bg-hover border border-border-muted text-text-muted hover:text-text-primary text-[11px] px-2 py-0.5 rounded-lg transition-colors flex items-center gap-1 hover:border-ember"
+            className="bg-bg-secondary hover:bg-bg-hover border border-border-muted text-text-muted hover:text-text-primary text-[11px] px-2 py-0.5 rounded-lg transition-colors flex items-center gap-1 hover:border-ember whitespace-nowrap flex-shrink-0 font-medium"
             title="Upload AOI GeoJSON"
           >
             <Upload size={11} className="text-ember" />
             <span className="hidden sm:inline">GeoJSON</span>
           </button>
+
+          {customGeoJson && (
+            <button
+              onClick={() => setCustomGeoJson(null)}
+              className="bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] px-2 py-0.5 rounded-lg hover:bg-red-500/30 transition-colors flex items-center gap-1 font-mono whitespace-nowrap flex-shrink-0"
+              title="Clear Custom Polygon Boundary"
+            >
+              ✕ Clear Poly
+            </button>
+          )}
+
+          {/* Multi-Scale Radius Scale (10km to 1000km) */}
+          <div className="flex items-center bg-bg-card border border-border-muted rounded-lg p-0.5 text-[11px] font-mono">
+            <span className="text-[10px] text-text-muted px-1.5 font-sans font-semibold flex items-center gap-1">
+              <Target size={11} className="text-ember" />
+              <span className="hidden sm:inline">Range:</span>
+            </span>
+            {[10, 25, 50, 100, 300, 500, 1000].map(km => (
+              <button
+                key={km}
+                onClick={() => changeActiveRadius(km)}
+                className={clsx(
+                  'px-1.5 py-0.5 rounded text-[10px] font-bold transition-all whitespace-nowrap',
+                  activeRadiusKm === km
+                    ? 'bg-ember text-white shadow'
+                    : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
+                )}
+                title={`Set study radius to ${km} km`}
+              >
+                {km >= 1000 ? '1000k' : `${km}k`}
+              </button>
+            ))}
+          </div>
 
           {/* Sensor Layer Filter Toggle */}
           <div className="flex items-center bg-bg-card border border-border-muted rounded-lg p-0.5 text-[11px]">
@@ -342,7 +472,7 @@ export default function FireMap({ customHotspots }) {
                 key={opt.id}
                 onClick={() => setSensorFilter(opt.id)}
                 className={clsx(
-                  'px-2 py-0.5 rounded text-[10px] font-medium transition-colors',
+                  'px-2 py-0.5 rounded text-[10px] font-medium transition-colors whitespace-nowrap flex-shrink-0',
                   sensorFilter === opt.id
                     ? 'bg-amber-600 text-white font-semibold shadow'
                     : 'text-text-muted hover:text-text-primary'
@@ -360,7 +490,7 @@ export default function FireMap({ customHotspots }) {
                 key={key}
                 onClick={() => setBasemap(key)}
                 className={clsx(
-                  'px-2 py-0.5 rounded text-[10px] font-medium transition-colors',
+                  'px-2 py-0.5 rounded text-[10px] font-medium transition-colors whitespace-nowrap flex-shrink-0',
                   basemap === key
                     ? 'bg-ember text-white shadow font-semibold'
                     : 'text-text-muted hover:text-text-primary'
@@ -373,20 +503,24 @@ export default function FireMap({ customHotspots }) {
         </div>
       </div>
 
-      {/* Smart AOI Intelligence Badge (Top Right or Bottom Right) */}
-      <div className="absolute top-14 right-2.5 z-[999] bg-bg-card/95 backdrop-blur-md border border-border-muted rounded-lg px-2.5 py-1.5 text-xs font-mono space-y-0.5 shadow-lg max-w-[220px] hidden sm:block">
+      {/* Smart AOI Intelligence Badge (Top Right) */}
+      <div className="absolute top-16 right-2.5 z-[990] bg-bg-card/95 backdrop-blur-md border border-border-muted rounded-lg px-2.5 py-1.5 text-xs font-mono space-y-0.5 shadow-lg max-w-[220px] hidden md:block">
         <div className="flex items-center gap-1 text-ember font-bold text-[11px]">
           <Crosshair size={11} className="text-ember" />
           <span>SMART AOI INTEL</span>
         </div>
         <div className="text-text-primary text-[11px] truncate font-semibold" title={aoiName}>{aoiName || 'Active Region'}</div>
         <div className="text-[10px] text-text-muted flex justify-between">
+          <span>Range Scale:</span>
+          <span className="text-amber-400 font-bold">{activeRadiusKm} km Radius</span>
+        </div>
+        <div className="text-[10px] text-text-muted flex justify-between">
           <span>Area:</span>
           <span className="text-text-primary">{aoiAreaKm2 ? `${aoiAreaKm2.toLocaleString()} km²` : 'Standard Bbox'}</span>
         </div>
         <div className="text-[10px] text-text-muted flex justify-between">
           <span>Baseline:</span>
-          <span className="text-emerald-400 font-bold">25-Yr Harmonized</span>
+          <span className="text-emerald-400 font-bold">27-Yr Harmonized (2000–2026)</span>
         </div>
       </div>
 
@@ -394,9 +528,14 @@ export default function FireMap({ customHotspots }) {
       <MapContainer
         center={[21.2, 72.8]}
         zoom={8}
-        style={{ width: '100%', height: '100%' }}
+        zoomControl={false}
+        attributionControl={false}
+        style={{ width: '100%', height: '100%', minHeight: '600px', flex: 1 }}
         preferCanvas
       >
+        <MapResizeHandler />
+        {/* Re-positioned Zoom Control away from Search Bar to bottom-right */}
+        <ZoomControl position="bottomright" />
         {/* Zero-Key Open Basemap Layer */}
         <TileLayer
           key={basemap}
@@ -405,47 +544,12 @@ export default function FireMap({ customHotspots }) {
           maxZoom={BASEMAPS[basemap].maxZoom}
         />
 
-        {/* Fly to region trigger */}
-        {flyTarget && <FlyToRegion target={flyTarget} />}
-
-        {/* Click anywhere on Earth handler */}
-        <MapClickHandler onLocationClicked={setClickedLocation} />
-
-        {/* Click Location Interactive Action Popup */}
-        {clickedLocation && (
-          <Popup
-            position={[clickedLocation.lat, clickedLocation.lng]}
-            onClose={() => setClickedLocation(null)}
-          >
-            <div className="p-1 space-y-2 text-xs min-w-[210px]">
-              <div className="font-semibold text-text-primary flex items-center justify-between border-b border-border-muted pb-1">
-                <span className="flex items-center gap-1 text-ember font-bold">
-                  <MapPin size={12} className="text-ember" />
-                  <span>Earth Point Selected</span>
-                </span>
-              </div>
-              <div className="font-mono text-[10px] text-text-muted bg-bg-secondary p-1 rounded">
-                Lat: {clickedLocation.lat.toFixed(4)}° | Lon: {clickedLocation.lng.toFixed(4)}°
-              </div>
-              <p className="text-[11px] text-text-secondary leading-snug">
-                Set study AOI at this coordinate to retrieve & harmonize active fire hotspots:
-              </p>
-              <div className="flex gap-1.5 pt-0.5">
-                <button
-                  onClick={() => setAOIFromClick(clickedLocation, 0.45, 'Point AOI')}
-                  className="flex-1 bg-ember hover:bg-ember/90 text-white font-medium py-1 px-1.5 rounded text-[10px] transition-colors shadow text-center"
-                >
-                  🔥 100 km AOI
-                </button>
-                <button
-                  onClick={() => setAOIFromClick(clickedLocation, 1.25, 'Broad AOI')}
-                  className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-medium py-1 px-1.5 rounded text-[10px] transition-colors shadow text-center"
-                >
-                  🛰️ 300 km AOI
-                </button>
-              </div>
-            </div>
-          </Popup>
+        {/* Fly to region trigger (flies once and cleans up) */}
+        {flyTarget && (
+          <FlyToRegion
+            target={flyTarget}
+            onComplete={() => setFlyTarget(null)}
+          />
         )}
 
         {/* Draw tool */}
@@ -453,6 +557,21 @@ export default function FireMap({ customHotspots }) {
 
         {/* AOI Bbox Rectangle */}
         <BboxRectangle bbox={bbox} />
+
+        {/* Custom Uploaded GeoJSON Polygon Overlay */}
+        {customGeoJson && (
+          <GeoJSON
+            key={JSON.stringify(customGeoJson).slice(0, 50)}
+            data={customGeoJson}
+            style={{
+              color: '#FF4500',
+              weight: 2.5,
+              fillColor: '#FF4500',
+              fillOpacity: 0.2,
+              dashArray: '6, 6',
+            }}
+          />
+        )}
 
         {/* Gujarat outline */}
         {showOutline && (
@@ -469,10 +588,10 @@ export default function FireMap({ customHotspots }) {
             center={[pt.lat, pt.lon]}
             radius={frpToRadius(pt.frp)}
             pathOptions={{
-              fillColor:   frpToColor(pt.frp),
-              color:       frpToColor(pt.frp),
+              fillColor: frpToColor(pt.frp),
+              color: frpToColor(pt.frp),
               fillOpacity: 0.75,
-              weight:      0.5,
+              weight: 0.5,
             }}
           >
             <Popup>
@@ -524,16 +643,15 @@ export default function FireMap({ customHotspots }) {
 }
 
 // ─── LeafletPolygon helper ────────────────────────────────────────────────────
-import { useEffect as ue } from 'react'
 function LeafletPolygon({ positions }) {
   const map = useMap()
-  ue(() => {
+  useEffect(() => {
     const polygon = L.polygon(positions, {
-      color:     '#FF4500',
-      weight:    1.5,
-      fill:      false,
+      color: '#FF4500',
+      weight: 1.5,
+      fill: false,
       dashArray: '4 3',
-      opacity:   0.5,
+      opacity: 0.5,
     }).addTo(map)
     return () => map.removeLayer(polygon)
   }, [map, positions])
