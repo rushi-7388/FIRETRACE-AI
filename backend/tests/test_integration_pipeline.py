@@ -60,30 +60,45 @@ def test_calendar_and_harmonize_endpoints():
     assert "calendar_matrix" in cal_data
 
 
-def test_export_endpoints_csv_and_pdf():
-    # 1. CSV export
-    req_csv = ExportRequest(
-        bbox="72.6,21.0,73.2,21.4",
-        start_date="2024-04-01",
-        end_date="2024-04-05",
-        format="csv",
-        data_type="all"
-    )
-    csv_res = asyncio.run(export_data(req_csv))
-    assert "text/csv" in csv_res.headers.get("content-type", "")
-    assert b"latitude" in csv_res.body
+async def _read_streaming(res) -> bytes:
+    chunks = []
+    async for chunk in res.body_iterator:
+        if isinstance(chunk, str):
+            chunks.append(chunk.encode("utf-8"))
+        else:
+            chunks.append(chunk)
+    return b"".join(chunks)
 
-    # 2. PDF report export
-    req_pdf = ExportRequest(
-        bbox="72.6,21.0,73.2,21.4",
-        start_date="2024-04-01",
-        end_date="2024-04-05",
-        format="pdf_summary",
-        data_type="all"
-    )
-    pdf_res = asyncio.run(export_data(req_pdf))
-    assert "application/pdf" in pdf_res.headers.get("content-type", "")
-    assert pdf_res.body.startswith(b"%PDF-")
+
+def test_export_endpoints_csv_and_pdf():
+    async def run_exports():
+        # 1. CSV export
+        req_csv = ExportRequest(
+            bbox="72.6,21.0,73.2,21.4",
+            start_date="2024-04-01",
+            end_date="2024-04-05",
+            format="csv",
+            data_type="all"
+        )
+        csv_res = await export_data(req_csv)
+        assert "text/csv" in csv_res.headers.get("content-type", "")
+        csv_body = await _read_streaming(csv_res)
+        assert b"latitude" in csv_body
+
+        # 2. PDF report export
+        req_pdf = ExportRequest(
+            bbox="72.6,21.0,73.2,21.4",
+            start_date="2024-04-01",
+            end_date="2024-04-05",
+            format="pdf_summary",
+            data_type="all"
+        )
+        pdf_res = await export_data(req_pdf)
+        assert "application/pdf" in pdf_res.headers.get("content-type", "")
+        pdf_body = await _read_streaming(pdf_res)
+        assert pdf_body.startswith(b"%PDF-")
+
+    asyncio.run(run_exports())
 
 
 def test_ml_endpoints_integration():
