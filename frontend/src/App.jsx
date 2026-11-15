@@ -1,5 +1,7 @@
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import Dashboard from './pages/Dashboard.jsx'
 import GlobalFireMap from './pages/GlobalFireMap.jsx'
 import CalendarPage from './pages/CalendarPage.jsx'
@@ -103,6 +105,8 @@ export default function App() {
           success: { iconTheme: { primary: '#FF4500', secondary: '#0D1117' } },
         }}
       />
+      <Analytics />
+      <SpeedInsights />
     </div>
   )
 }
