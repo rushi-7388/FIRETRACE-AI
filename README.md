@@ -126,8 +126,11 @@ docker-compose up --build
    - **Root Directory**: `./` (or select `frontend`)
    - **Build Command**: Automatically managed (`npm run build`)
    - **Output Directory**: `frontend/dist`
-   - *(Optional)* **Environment Variables**: `VITE_API_BASE_URL` = `<your-backend-url>`. If omitted, FIRETRACE AI automatically runs with its built-in Autonomous 24/7 NASA Climatology Engine with zero external dependencies.
-4. Click **Deploy**. Your live global deployment will be ready in under 60 seconds with full SPA URL routing support.
+   - *(Optional)* **Environment Variables**: `VITE_API_BASE_URL` = `<your-backend-url>`.
+4. **Autonomous Climatology Zero-Failure Guarantee**:
+   - If `VITE_API_BASE_URL` is omitted or the backend is offline, FIRETRACE AI automatically switches to its built-in **Autonomous 24/7 NASA Climatology Engine**.
+   - Built-in Axios response interceptors prevent SPA HTML rewrites (`index.html`) from contaminating data structures, guaranteeing zero runtime exceptions (`TypeError: reduce/map is not a function`).
+5. Click **Deploy**. Your live global deployment will be ready in under 60 seconds with full SPA URL routing support.
 
 ---
 

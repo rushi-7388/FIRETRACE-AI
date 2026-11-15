@@ -25,6 +25,7 @@
 4. [System Architecture & Engineering Stack](#4-system-architecture--engineering-stack)
    - [4.1 Architecture Diagram & Component Topology](#41-architecture-diagram--component-topology)
    - [4.2 Security, High-Performance Pure ASGI Middleware & Circuit Breakers](#42-security-high-performance-pure-asgi-middleware--circuit-breakers)
+   - [4.3 Frontend Resilient Architecture & Zero-Failure Cloud Fallback](#43-frontend-resilient-architecture--zero-failure-cloud-fallback)
 5. [Complete REST API Reference](#5-complete-rest-api-reference)
 6. [Database Schema & Data Dictionary](#6-database-schema--data-dictionary)
 7. [User Guide & Operational Manual](#7-user-guide--operational-manual)
@@ -235,6 +236,19 @@ $$Z_m = \frac{\text{HDI}_m - \tilde{\mu}_m}{\sigma_m}$$
    - Comprehensive security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`).
 2. **FIRMS Circuit Breaker & Multi-Year Routing:**
    - Single requests exceeding 180 days (e.g., 27-year calendar queries) bypass sequential chunk bombardment (preventing 1,580 HTTP requests and NASA 429 rate-limiting blocks) and route directly through the autonomous climatology engine and SQLite spatial cache in $<100\text{ms}$.
+
+---
+
+### 4.3 Frontend Resilient Architecture & Zero-Failure Cloud Fallback
+
+To guarantee zero downtime and graceful offline operation when deployed on cloud hosts (such as Vercel, Netlify, or static CDN edges) without an active backend server:
+1. **Axios Response Interceptor:**
+   - Detects when SPA wildcard rewrite rules (`/(.*) -> /index.html`) serve HTML document strings for `/api/*` routes.
+   - Automatically intercepts and rejects responses with `Content-Type: text/html` or HTML signatures with an error, preventing string payloads from contaminating frontend state.
+2. **Autonomous Climatology Fallback Engine:**
+   - Built into the Zustand global store (`useAppStore.js`), generating mathematically consistent 27-year harmonized calendar time-series and fire point distributions matching global biome seasonality whenever the live API is unreachable or returns non-array payloads.
+3. **Strict Array Validation & Defensive Component Guards:**
+   - All visual components (`SummaryStats`, `BurnCalendar`, `TimeSeriesChart`, `AnomalyChart`, `FireMap`, `Compare`, `RegionalAnalytics`, `CalendarPage`) employ defensive `Array.isArray()` preconditions, entirely preventing runtime exceptions (`TypeError: reduce/map/forEach is not a function`).
 
 ---
 
