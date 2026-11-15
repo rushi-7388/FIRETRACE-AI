@@ -45,7 +45,7 @@ export default function TimeSeriesChart() {
   const loading = useAppStore(s => s.loading)
 
   const chartData = useMemo(() => {
-    if (!calendarData) return []
+    if (!Array.isArray(calendarData) || calendarData.length === 0) return []
 
     return calendarData.map(d => ({
       label: formatDate(d.year, d.month),

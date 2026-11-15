@@ -462,16 +462,16 @@ export default function Compare() {
 
   // Available years
   const years = useMemo(() => {
-    if (!calendarData) return []
+    if (!Array.isArray(calendarData)) return []
     return Array.from(new Set(calendarData.map(d => d.year))).sort((a, b) => a - b)
   }, [calendarData])
 
   const [selectedYear, setSelectedYear] = useState(null)
-  const year = selectedYear ?? years[years.length - 1] ?? 2023
+  const year = selectedYear ?? (years.length ? years[years.length - 1] : 2023)
 
   // Monthly breakdown for selected year
   const monthlyData = useMemo(() => {
-    if (!calendarData) return []
+    if (!Array.isArray(calendarData)) return []
     const rows = calendarData.filter(d => d.year === year)
     return Array.from({ length: 12 }, (_, i) => {
       const m = i + 1
@@ -488,7 +488,7 @@ export default function Compare() {
 
   // Annual aggregates
   const annualData = useMemo(() => {
-    if (!calendarData) return []
+    if (!Array.isArray(calendarData)) return []
     return years.map(y => {
       const rows = calendarData.filter(d => d.year === y)
       return {

@@ -14,7 +14,7 @@ export default function CalendarPage() {
 
   // Historical Fire Season Intelligence derivation
   const fireSeasonIntel = useMemo(() => {
-    if (!calendarData || calendarData.length === 0) return null
+    if (!Array.isArray(calendarData) || calendarData.length === 0) return null
     const monthSums = {}
     for (let m = 1; m <= 12; m++) {
       const recs = calendarData.filter((d) => d.month === m)
@@ -59,7 +59,7 @@ export default function CalendarPage() {
 
   // Calculate dynamic baseline table from NASA observations
   const monthlyBaselines = useMemo(() => {
-    if (!calendarData || calendarData.length === 0) return []
+    if (!Array.isArray(calendarData) || calendarData.length === 0) return []
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const grouped = {}
 

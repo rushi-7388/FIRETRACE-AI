@@ -46,7 +46,7 @@ export default function BurnCalendar() {
   }, [])
 
   useEffect(() => {
-    if (!calendarData || calendarData.length === 0 || !svgRef.current) return
+    if (!Array.isArray(calendarData) || calendarData.length === 0 || !svgRef.current) return
 
     const margin = { top: 58, right: 20, bottom: 64, left: 52 }
     const MONTHS = 12
@@ -304,7 +304,7 @@ export default function BurnCalendar() {
 
   if (loading) return <CalendarSkeleton />
 
-  if (!calendarData || calendarData.length === 0) {
+  if (!Array.isArray(calendarData) || calendarData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-48 text-text-muted gap-3">
         <Flame size={36} className="text-border-muted" />

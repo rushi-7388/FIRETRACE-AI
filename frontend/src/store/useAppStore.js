@@ -182,6 +182,10 @@ const useAppStore = create((set, get) => ({
       const response = await axios.get('/api/calendar', { params, timeout: 30000 })
       const data = response.data?.rows ?? response.data
 
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response structure: expected array of calendar rows')
+      }
+
       set({
         harmonizedData: data,
         calendarData: data,
@@ -223,6 +227,10 @@ const useAppStore = create((set, get) => ({
 
       const response = await axios.get('/api/hotspots', { params, timeout: 30000 })
       const hotspots = response.data?.hotspots ?? response.data
+
+      if (!Array.isArray(hotspots)) {
+        throw new Error('Invalid response structure: expected array of hotspots')
+      }
 
       set({
         hotspots,

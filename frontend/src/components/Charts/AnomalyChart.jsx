@@ -49,7 +49,7 @@ export default function AnomalyChart() {
 
   // Get available years (2026 down to 2000)
   const years = useMemo(() => {
-    if (!calendarData || calendarData.length === 0) {
+    if (!Array.isArray(calendarData) || calendarData.length === 0) {
       return Array.from({ length: 27 }, (_, i) => 2026 - i)
     }
     const extracted = Array.from(new Set(calendarData.map(d => d.year))).sort((a, b) => b - a)
@@ -61,7 +61,7 @@ export default function AnomalyChart() {
   const year = selectedYear ?? years[0] ?? 2026
 
   const chartData = useMemo(() => {
-    if (!calendarData) return []
+    if (!Array.isArray(calendarData)) return []
     const rows = calendarData.filter(d => d.year === year)
     return Array.from({ length: 12 }, (_, i) => {
       const m = i + 1
@@ -79,7 +79,7 @@ export default function AnomalyChart() {
     return <div className="skeleton h-48 w-full rounded-lg" />
   }
 
-  if (!calendarData || calendarData.length === 0) {
+  if (!Array.isArray(calendarData) || calendarData.length === 0) {
     return (
       <div className="flex items-center justify-center h-32 text-text-muted text-sm">
         <Activity size={18} className="mr-2 text-border-muted" />

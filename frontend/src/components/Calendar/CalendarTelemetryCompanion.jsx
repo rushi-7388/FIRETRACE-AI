@@ -15,7 +15,7 @@ export default function CalendarTelemetryCompanion() {
 
   // 1. Annual Aggregation & Trends (2000 - 2026)
   const annualData = useMemo(() => {
-    if (!calendarData || calendarData.length === 0) return []
+    if (!Array.isArray(calendarData) || calendarData.length === 0) return []
     const yearMap = {}
 
     calendarData.forEach(d => {
@@ -45,7 +45,7 @@ export default function CalendarTelemetryCompanion() {
 
   // 2. Executive Climatology & Anomaly Summary
   const stats = useMemo(() => {
-    if (!calendarData || calendarData.length === 0) return null
+    if (!Array.isArray(calendarData) || calendarData.length === 0) return null
 
     // Monthly baseline profiles
     const monthTotals = Array(12).fill(0)

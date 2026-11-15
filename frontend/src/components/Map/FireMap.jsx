@@ -380,7 +380,7 @@ export default function FireMap({ customHotspots }) {
   }
 
   // Filter hotspots by sensor layer and polygon boundary
-  const displayedHotspots = (hotspots || []).filter((pt) => {
+  const displayedHotspots = (Array.isArray(hotspots) ? hotspots : []).filter((pt) => {
     if (sensorFilter === 'modis' && !pt.sensor?.toUpperCase().includes('MODIS')) return false
     if (sensorFilter === 'viirs' && !pt.sensor?.toUpperCase().includes('VIIRS')) return false
     if (customGeoJson && !isHotspotInGeoJson(pt.lat, pt.lon, customGeoJson)) return false

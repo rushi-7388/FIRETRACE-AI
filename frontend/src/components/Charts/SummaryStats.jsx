@@ -32,7 +32,7 @@ export default function SummaryStats({ layout = 'grid' }) {
   const [showDetailed, setShowDetailed] = useState(false)
 
   const stats = useMemo(() => {
-    if (!calendarData || calendarData.length === 0) return null
+    if (!Array.isArray(calendarData) || calendarData.length === 0) return null
 
     // Total harmonized & raw sensor counts
     const totalHarmonized = calendarData.reduce((sum, d) => sum + (d.harmonized_count ?? 0), 0)

@@ -73,7 +73,7 @@ export default function RegionalAnalytics() {
 
   // Decadal analysis: 2000-2009 vs 2010-2019 vs 2020-Present
   const decadalData = useMemo(() => {
-    if (!calendarData || calendarData.length === 0) return []
+    if (!Array.isArray(calendarData) || calendarData.length === 0) return []
     const decades = {
       '2000s': { count: 0, sumHdi: 0, years: 0 },
       '2010s': { count: 0, sumHdi: 0, years: 0 },

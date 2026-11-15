@@ -36,7 +36,7 @@ export default function AnomalyIntelligence() {
 
   // Client filtered anomalies based on baseline period
   const filteredData = useMemo(() => {
-    if (!calendarData || calendarData.length === 0) return []
+    if (!Array.isArray(calendarData) || calendarData.length === 0) return []
     return calendarData.filter(d => {
       if (baselinePeriod === 'viirs') return d.year >= 2012
       if (baselinePeriod === 'modis') return d.year < 2012

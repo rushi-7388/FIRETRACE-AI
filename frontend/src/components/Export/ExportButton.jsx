@@ -37,7 +37,7 @@ export default function ExportButton() {
   const { calendarData, bbox, dateRange, sensor } = useAppStore()
 
   const handleCSVDownload = async () => {
-    if (!calendarData || calendarData.length === 0) {
+    if (!Array.isArray(calendarData) || calendarData.length === 0) {
       toast.error('No data to export - run analysis first')
       return
     }
