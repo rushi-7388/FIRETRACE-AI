@@ -9,11 +9,15 @@ import AnomalyChart from '../components/Charts/AnomalyChart.jsx'
 import clsx from 'clsx'
 
 export default function AnomalyIntelligence() {
-  const { calendarData, bbox, aoiName } = useAppStore()
+  const { calendarData, bbox, aoiName, fetchHarmonized } = useAppStore()
   const [serverAnomalies, setServerAnomalies] = useState(null)
   const [loadingServer, setLoadingServer] = useState(false)
   const [baselinePeriod, setBaselinePeriod] = useState('full') // 'full' | 'viirs' | 'modis'
   const [selectedMonth, setSelectedMonth] = useState(null)
+
+  useEffect(() => {
+    if (!calendarData) fetchHarmonized()
+  }, [])
 
   const bboxStr = bbox ? bbox.join(',') : '72.0,20.0,74.5,22.0'
 

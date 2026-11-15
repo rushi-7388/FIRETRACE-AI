@@ -15,11 +15,22 @@ if (apiBase) {
 // so that fallback logic (autonomous climatology model) is triggered seamlessly.
 axios.interceptors.response.use(
   (response) => {
-    const contentType = response.headers?.['content-type'] || ''
-    if (
-      contentType.includes('text/html') ||
+    const ct = (
+      (typeof response.headers?.get === 'function' ? response.headers.get('content-type') : null) ||
+      response.headers?.['content-type'] ||
+      response.headers?.['Content-Type'] ||
+      ''
+    ).toLowerCase()
+
+    const isHtml =
+      ct.includes('text/html') ||
       (typeof response.data === 'string' && response.data.trim().startsWith('<'))
-    ) {
+
+    const isApiRoute =
+      response.config?.url?.includes('/api/') ||
+      response.config?.url?.startsWith('/api')
+
+    if (isHtml || (isApiRoute && typeof response.data === 'string')) {
       return Promise.reject(
         new Error('API returned HTML document instead of JSON (check VITE_API_BASE_URL or backend connectivity)')
       )

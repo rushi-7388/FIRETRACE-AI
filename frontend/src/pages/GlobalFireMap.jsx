@@ -16,7 +16,7 @@ const SATELLITE_OPTIONS = [
 ]
 
 export default function GlobalFireMap() {
-  const { hotspots, fetchHotspots, bbox, setBbox } = useAppStore()
+  const { hotspots, fetchHotspots, calendarData, fetchHarmonized, bbox, setBbox } = useAppStore()
   const [selectedSats, setSelectedSats] = useState(['TERRA', 'AQUA', 'SNPP', 'NOAA20', 'NOAA21'])
 
   // Timeline playback state
@@ -27,9 +27,8 @@ export default function GlobalFireMap() {
   const timerRef = useRef(null)
 
   useEffect(() => {
-    if (!hotspots || hotspots.length === 0) {
-      fetchHotspots()
-    }
+    if (!hotspots || hotspots.length === 0) fetchHotspots()
+    if (!calendarData) fetchHarmonized()
   }, [])
 
   // Extract continuous chronological timeline sequence

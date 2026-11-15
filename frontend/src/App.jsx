@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
+import useAppStore from './store/useAppStore.js'
 import Dashboard from './pages/Dashboard.jsx'
 import GlobalFireMap from './pages/GlobalFireMap.jsx'
 import CalendarPage from './pages/CalendarPage.jsx'
@@ -76,6 +78,14 @@ function Navbar() {
 }
 
 export default function App() {
+  const { calendarData, hotspots, fetchHarmonized, fetchHotspots } = useAppStore()
+
+  // Ensure satellite calendar data and hotspots are loaded on any route entry or refresh
+  useEffect(() => {
+    if (!calendarData) fetchHarmonized()
+    if (!hotspots) fetchHotspots()
+  }, [])
+
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col font-sans">
       <Navbar />

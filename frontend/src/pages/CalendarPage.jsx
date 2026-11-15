@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import useAppStore from '../store/useAppStore.js'
 import BurnCalendar from '../components/Calendar/BurnCalendar.jsx'
 import CalendarTelemetryCompanion from '../components/Calendar/CalendarTelemetryCompanion.jsx'
@@ -7,10 +7,14 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 
 export default function CalendarPage() {
-  const { calendarData, loading, bbox, aoiName } = useAppStore()
+  const { calendarData, loading, bbox, aoiName, fetchHarmonized } = useAppStore()
   const [selectedCell, setSelectedCell] = useState(null)
   const [inspectData, setInspectData] = useState(null)
   const [inspectLoading, setInspectLoading] = useState(false)
+
+  useEffect(() => {
+    if (!calendarData) fetchHarmonized()
+  }, [])
 
   // Historical Fire Season Intelligence derivation
   const fireSeasonIntel = useMemo(() => {

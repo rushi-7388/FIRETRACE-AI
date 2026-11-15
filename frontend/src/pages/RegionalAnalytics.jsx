@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import useAppStore from '../store/useAppStore.js'
 import { MapPin, TrendingUp, AlertTriangle, Flame, ShieldAlert, BarChart, Zap, Activity } from 'lucide-react'
 import {
@@ -9,7 +9,12 @@ import {
 const FRP_COLORS = ['#FFD700', '#FF8C00', '#FF4500', '#800026']
 
 export default function RegionalAnalytics() {
-  const { calendarData, hotspots, bbox, aoiName } = useAppStore()
+  const { calendarData, hotspots, bbox, aoiName, fetchHarmonized, fetchHotspots } = useAppStore()
+
+  useEffect(() => {
+    if (!calendarData) fetchHarmonized()
+    if (!hotspots) fetchHotspots()
+  }, [])
 
   // Dynamic regional eco-regime derivation based on geographic coordinate
   const regionalContext = useMemo(() => {
